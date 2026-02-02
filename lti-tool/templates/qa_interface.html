@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q&A Asistent - {{ course_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .message {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loading-dots span {
+            animation: blink 1.4s infinite both;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; }
+            40% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold">🤖 Inteligentni Q&A Asistent</h1>
+                        <p class="text-blue-100 text-sm mt-1">{{ course_title }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm">Zdravo, <span class="font-semibold">{{ user_name }}</span>!</p>
+                        {% if is_instructor %}
+                        <span class="inline-block bg-yellow-400 text-blue-900 px-3 py-1 rounded-full text-xs font-semibold mt-1">
+                            Instruktor
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 container mx-auto px-4 py-8 max-w-4xl">
+            <!-- Instructions -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3">📚 Kako funkcioniše asistent?</h2>
+                <ul class="text-gray-600 space-y-2 text-sm">
+                    <li class="flex items-start">
+                        <span class="text-blue-600 mr-2">•</span>
+                        <span>Postavite pitanje o nastavnom materijalu iz kursa</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-600 mr-2">•</span>
+                        <span>AI asistent će pretražiti materijale i generisati odgovor</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-600 mr-2">•</span>
+                        <span>Odgovori su bazirani na semantičkoj analizi sadržaja kursa</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Messages Area -->
+                <div id="messages" class="h-96 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                    <div class="text-center text-gray-500 text-sm">
+                        Postavite vaše prvo pitanje!
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="border-t border-gray-200 p-4 bg-white">
+                    <form id="questionForm" class="flex gap-3">
+                        <input 
+                            type="text" 
+                            id="questionInput" 
+                            placeholder="Unesite vaše pitanje ovde..."
+                            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            required
+                        />
+                        <button 
+                            type="submit"
+                            id="submitBtn"
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-semibold"
+                        >
+                            Pitaj
+                        </button>
+                    </form>
+                    <p class="text-xs text-gray-500 mt-2">
+                        💡 Saveti: Budite što precizniji, koristite ključne reči iz kursa
+                    </p>
+                </div>
+            </div>
+
+            <!-- Statistics (for instructors) -->
+            {% if is_instructor %}
+            <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Statistika kursa</h3>
+                <div class="grid grid-cols-3 gap-4" id="stats">
+                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600">0</div>
+                        <div class="text-sm text-gray-600">Ukupno pitanja</div>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600">0%</div>
+                        <div class="text-sm text-gray-600">Prosečno poverenje</div>
+                    </div>
+                    <div class="text-center p-4 bg-purple-50 rounded-lg">
+                        <div class="text-2xl font-bold text-purple-600">0</div>
+                        <div class="text-sm text-gray-600">Aktivni studenti</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-gray-400 py-4">
+            <div class="container mx-auto px-4 text-center text-sm">
+                <p>Projekat iz Savremenih obrazovnih tehnologija i Semantičkog veba</p>
+                <p class="mt-1">FTN Novi Sad © 2026 | Powered by IMS LTI 1.3 & OWL Ontology</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const courseId = "{{ course_id }}";
+        const messagesContainer = document.getElementById('messages');
+        const questionForm = document.getElementById('questionForm');
+        const questionInput = document.getElementById('questionInput');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Add message to chat
+        function addMessage(text, isUser, confidence = null, sources = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-3xl px-4 py-3 rounded-lg ${
+                isUser 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white border border-gray-200 text-gray-800'
+            }`;
+            
+            // Message text
+            const textP = document.createElement('p');
+            textP.className = 'whitespace-pre-wrap';
+            textP.textContent = text;
+            bubble.appendChild(textP);
+            
+            // Confidence badge
+            if (confidence !== null && !isUser) {
+                const confDiv = document.createElement('div');
+                confDiv.className = 'mt-2 text-xs';
+                const confBadge = document.createElement('span');
+                confBadge.className = `inline-block px-2 py-1 rounded ${
+                    confidence > 0.8 ? 'bg-green-100 text-green-800' : 
+                    confidence > 0.6 ? 'bg-yellow-100 text-yellow-800' : 
+                    'bg-red-100 text-red-800'
+                }`;
+                confBadge.textContent = `Poverenje: ${(confidence * 100).toFixed(0)}%`;
+                confDiv.appendChild(confBadge);
+                bubble.appendChild(confDiv);
+            }
+            
+            // Sources
+            if (sources && sources.length > 0 && !isUser) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'mt-3 pt-3 border-t border-gray-100';
+                sourcesDiv.innerHTML = '<p class="text-xs font-semibold text-gray-600 mb-1">📖 Izvori:</p>';
+                sources.forEach((source, idx) => {
+                    const sourceP = document.createElement('p');
+                    sourceP.className = 'text-xs text-gray-500 truncate';
+                    sourceP.textContent = `${idx + 1}. ${source.content.substring(0, 80)}...`;
+                    sourcesDiv.appendChild(sourceP);
+                });
+                bubble.appendChild(sourcesDiv);
+            }
+            
+            messageDiv.appendChild(bubble);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Show loading indicator
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loading';
+            loadingDiv.className = 'message flex justify-start';
+            loadingDiv.innerHTML = `
+                <div class="bg-white border border-gray-200 px-4 py-3 rounded-lg">
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <span class="text-sm">AI razmišlja</span>
+                        <div class="loading-dots flex gap-1">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span>
+                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span>
+                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) loading.remove();
+        }
+
+        // Handle form submission
+        questionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const question = questionInput.value.trim();
+            if (!question) return;
+            
+            // Add user message
+            addMessage(question, true);
+            questionInput.value = '';
+            
+            // Disable input
+            submitBtn.disabled = true;
+            questionInput.disabled = true;
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        course_id: courseId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                hideLoading();
+                
+                if (data.error) {
+                    addMessage(`❌ Greška: ${data.error}`, false);
+                } else {
+                    addMessage(
+                        data.answer, 
+                        false, 
+                        data.confidence,
+                        data.sources || []
+                    );
+                    
+                    if (data.cached) {
+                        addMessage('💾 Ovaj odgovor je iz keša', false);
+                    }
+                }
+            } catch (error) {
+                hideLoading();
+                addMessage(`❌ Greška u komunikaciji sa serverom: ${error.message}`, false);
+            } finally {
+                submitBtn.disabled = false;
+                questionInput.disabled = false;
+                questionInput.focus();
+            }
+        });
+
+        // Clear initial message on first interaction
+        let firstInteraction = true;
+        questionInput.addEventListener('focus', () => {
+            if (firstInteraction) {
+                messagesContainer.innerHTML = '';
+                firstInteraction = false;
+            }
+        });
+    </script>
+</body>
+</html>

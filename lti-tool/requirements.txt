@@ -1,0 +1,45 @@
+# LTI Q&A Tool - Python Dependencies
+
+# Flask Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+flask-session==0.5.0
+
+# LTI 1.3 Support - ISPRAVLJENA VERZIJA
+PyLTI1p3==2.0.0
+
+# AI & ML
+openai==1.23.6
+langchain==0.1.13
+langchain-community==0.0.29
+langchain-openai==0.0.6
+langsmith==0.1.31
+
+# Vector Database
+chromadb==0.4.22
+sentence-transformers==2.2.2
+
+# Semantic Web & RDF
+rdflib==7.0.0
+SPARQLWrapper==2.0.0
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.2
+
+# HTTP & Networking
+requests==2.31.0
+urllib3==2.1.0
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.5.3
+pyyaml==6.0.1
+
+# Production Server
+gunicorn==21.2.0
+
+# Development
+pytest==7.4.3
+black==23.12.1
+flake8==7.0.0

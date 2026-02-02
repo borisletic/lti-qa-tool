@@ -1,0 +1,446 @@
+@prefix : <http://example.org/lms-tools#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix lti: <http://www.imsglobal.org/spec/lti/v1p3/> .
+
+# ============================================
+# ONTOLOGY METADATA
+# ============================================
+
+<http://example.org/lms-tools> rdf:type owl:Ontology ;
+    dcterms:title "LMS Tools and LTI Integration Ontology"@en ;
+    dcterms:title "Ontologija LMS Alata i LTI Integracije"@sr ;
+    dcterms:description "Ontology for describing Learning Management System integrated applications using IMS Learning Tools Interoperability standard"@en ;
+    dcterms:creator "FTN Novi Sad - Projekat iz Savremenih obrazovnih tehnologija i Semantičkog veba"@sr ;
+    dcterms:created "2026-01-31"^^xsd:date ;
+    owl:versionInfo "1.0" ;
+    rdfs:comment "Ova ontologija opisuje strukture i odnose između LMS alata, korisnika, kurseva, pitanja i odgovora u kontekstu obrazovnih tehnologija."@sr .
+
+# ============================================
+# CLASSES - Core Educational Entities
+# ============================================
+
+:LMSTool rdf:type owl:Class ;
+    rdfs:label "LMS Tool"@en ;
+    rdfs:label "LMS Alat"@sr ;
+    rdfs:comment "External application or service integrated into a Learning Management System"@en ;
+    rdfs:comment "Eksterna aplikacija ili servis integrisan u sistem za upravljanje učenjem"@sr .
+
+:QATool rdf:type owl:Class ;
+    rdfs:subClassOf :LMSTool ;
+    rdfs:label "Question Answering Tool"@en ;
+    rdfs:label "Alat za Pitanja i Odgovore"@sr ;
+    rdfs:comment "Specialized LMS tool that provides automated question answering based on course materials"@en ;
+    rdfs:comment "Specijalizovani LMS alat koji pruža automatizovane odgovore na pitanja baziran na nastavnim materijalima"@sr .
+
+:AssessmentTool rdf:type owl:Class ;
+    rdfs:subClassOf :LMSTool ;
+    rdfs:label "Assessment Tool"@en ;
+    rdfs:label "Alat za Ocenjivanje"@sr ;
+    rdfs:comment "Tool for creating and managing assessments, quizzes, and exams"@en .
+
+:CollaborationTool rdf:type owl:Class ;
+    rdfs:subClassOf :LMSTool ;
+    rdfs:label "Collaboration Tool"@en ;
+    rdfs:label "Alat za Saradnju"@sr ;
+    rdfs:comment "Tool facilitating student collaboration and group work"@en .
+
+# ============================================
+# CLASSES - LTI Integration
+# ============================================
+
+:LTIProvider rdf:type owl:Class ;
+    rdfs:label "LTI Provider"@en ;
+    rdfs:label "LTI Provajder"@sr ;
+    rdfs:comment "Service that provides LTI tool functionality according to IMS standards"@en ;
+    rdfs:comment "Servis koji pruža funkcionalnost LTI alata prema IMS standardima"@sr .
+
+:LTIConsumer rdf:type owl:Class ;
+    rdfs:label "LTI Consumer"@en ;
+    rdfs:label "LTI Konzument"@sr ;
+    rdfs:comment "Learning Management System that consumes LTI tools (e.g., Canvas, Moodle)"@en ;
+    rdfs:comment "Sistem za upravljanje učenjem koji koristi LTI alate (npr. Canvas, Moodle)"@sr .
+
+:LTIStandard rdf:type owl:Class ;
+    rdfs:label "LTI Standard"@en ;
+    rdfs:label "LTI Standard"@sr ;
+    rdfs:comment "Version of IMS Learning Tools Interoperability standard"@en .
+
+:LTI_1_1 rdf:type :LTIStandard ;
+    rdfs:label "LTI 1.1" ;
+    :versionNumber "1.1" ;
+    :usesAuthentication "OAuth 1.0" .
+
+:LTI_1_3 rdf:type :LTIStandard ;
+    rdfs:label "LTI 1.3" ;
+    :versionNumber "1.3" ;
+    :usesAuthentication "OAuth 2.0 + OpenID Connect" ;
+    rdfs:comment "Current recommended LTI version with enhanced security"@en .
+
+:ToolLaunch rdf:type owl:Class ;
+    rdfs:label "Tool Launch"@en ;
+    rdfs:label "Pokretanje Alata"@sr ;
+    rdfs:comment "Instance of LTI tool being launched by a user in specific course context"@en .
+
+# ============================================
+# CLASSES - Educational Context
+# ============================================
+
+:Course rdf:type owl:Class ;
+    rdfs:label "Course"@en ;
+    rdfs:label "Kurs"@sr ;
+    rdfs:comment "Educational course offered in Learning Management System"@en ;
+    rdfs:comment "Obrazovni kurs koji se nudi u sistemu za upravljanje učenjem"@sr .
+
+:User rdf:type owl:Class ;
+    rdfs:label "User"@en ;
+    rdfs:label "Korisnik"@sr ;
+    rdfs:comment "Person using the LMS and integrated tools"@en .
+
+:Student rdf:type owl:Class ;
+    rdfs:subClassOf :User ;
+    rdfs:label "Student"@en ;
+    rdfs:label "Student"@sr ;
+    rdfs:comment "User enrolled in courses as a learner"@en .
+
+:Instructor rdf:type owl:Class ;
+    rdfs:subClassOf :User ;
+    rdfs:label "Instructor"@en ;
+    rdfs:label "Instruktor"@sr ;
+    rdfs:comment "User teaching courses and managing course content"@en .
+
+:LearningResource rdf:type owl:Class ;
+    rdfs:label "Learning Resource"@en ;
+    rdfs:label "Obrazovni Resurs"@sr ;
+    rdfs:comment "Educational material used in course (documents, videos, slides, etc.)"@en .
+
+# ============================================
+# CLASSES - Q&A Functionality
+# ============================================
+
+:Question rdf:type owl:Class ;
+    rdfs:label "Question"@en ;
+    rdfs:label "Pitanje"@sr ;
+    rdfs:comment "Student question about course material"@en ;
+    rdfs:comment "Studentsko pitanje o nastavnom materijalu"@sr .
+
+:Answer rdf:type owl:Class ;
+    rdfs:label "Answer"@en ;
+    rdfs:label "Odgovor"@sr ;
+    rdfs:comment "Generated or provided answer to a question"@en ;
+    rdfs:comment "Generisan ili pružen odgovor na pitanje"@sr .
+
+:AIAnswer rdf:type owl:Class ;
+    rdfs:subClassOf :Answer ;
+    rdfs:label "AI-Generated Answer"@en ;
+    rdfs:label "AI Generisan Odgovor"@sr ;
+    rdfs:comment "Answer automatically generated by AI system"@en .
+
+:Feedback rdf:type owl:Class ;
+    rdfs:label "Feedback"@en ;
+    rdfs:label "Povratna Informacija"@sr ;
+    rdfs:comment "User feedback on answer quality or relevance"@en .
+
+# ============================================
+# OBJECT PROPERTIES - Integration & Usage
+# ============================================
+
+:integratedWith rdf:type owl:ObjectProperty ;
+    rdfs:domain :LMSTool ;
+    rdfs:range :Course ;
+    rdfs:label "integrated with"@en ;
+    rdfs:label "integrisan sa"@sr ;
+    rdfs:comment "Indicates that a tool is integrated into a specific course"@en .
+
+:implementsStandard rdf:type owl:ObjectProperty ;
+    rdfs:domain :LTIProvider ;
+    rdfs:range :LTIStandard ;
+    rdfs:label "implements standard"@en ;
+    rdfs:label "implementira standard"@sr ;
+    rdfs:comment "Indicates which LTI standard version the provider implements"@en .
+
+:consumesTool rdf:type owl:ObjectProperty ;
+    rdfs:domain :LTIConsumer ;
+    rdfs:range :LMSTool ;
+    rdfs:label "consumes tool"@en ;
+    rdfs:label "koristi alat"@sr .
+
+:usedBy rdf:type owl:ObjectProperty ;
+    rdfs:domain :LMSTool ;
+    rdfs:range :User ;
+    rdfs:label "used by"@en ;
+    rdfs:label "korišćen od strane"@sr .
+
+:launchedTool rdf:type owl:ObjectProperty ;
+    rdfs:domain :ToolLaunch ;
+    rdfs:range :LMSTool ;
+    rdfs:label "launched tool"@en .
+
+:byUser rdf:type owl:ObjectProperty ;
+    rdfs:domain :ToolLaunch ;
+    rdfs:range :User ;
+    rdfs:label "by user"@en .
+
+:inCourse rdf:type owl:ObjectProperty ;
+    rdfs:domain :ToolLaunch ;
+    rdfs:range :Course ;
+    rdfs:label "in course"@en .
+
+# ============================================
+# OBJECT PROPERTIES - Educational Relations
+# ============================================
+
+:enrolledIn rdf:type owl:ObjectProperty ;
+    rdfs:domain :Student ;
+    rdfs:range :Course ;
+    rdfs:label "enrolled in"@en ;
+    rdfs:label "upisan u"@sr .
+
+:teaches rdf:type owl:ObjectProperty ;
+    rdfs:domain :Instructor ;
+    rdfs:range :Course ;
+    rdfs:label "teaches"@en ;
+    rdfs:label "predaje"@sr .
+
+:partOf rdf:type owl:ObjectProperty ;
+    rdfs:domain :LearningResource ;
+    rdfs:range :Course ;
+    rdfs:label "part of"@en ;
+    rdfs:label "deo od"@sr .
+
+# ============================================
+# OBJECT PROPERTIES - Q&A Relations
+# ============================================
+
+:askedBy rdf:type owl:ObjectProperty ;
+    rdfs:domain :Question ;
+    rdfs:range :User ;
+    rdfs:label "asked by"@en ;
+    rdfs:label "postavio"@sr .
+
+:relatedToCourse rdf:type owl:ObjectProperty ;
+    rdfs:domain :Question ;
+    rdfs:range :Course ;
+    rdfs:label "related to course"@en ;
+    rdfs:label "povezano sa kursom"@sr .
+
+:answersQuestion rdf:type owl:ObjectProperty ;
+    rdfs:domain :Answer ;
+    rdfs:range :Question ;
+    rdfs:label "answers question"@en ;
+    rdfs:label "odgovara na pitanje"@sr .
+
+:generatedBy rdf:type owl:ObjectProperty ;
+    rdfs:domain :AIAnswer ;
+    rdfs:range :QATool ;
+    rdfs:label "generated by"@en ;
+    rdfs:label "generisan od"@sr .
+
+:basedOnResource rdf:type owl:ObjectProperty ;
+    rdfs:domain :Answer ;
+    rdfs:range :LearningResource ;
+    rdfs:label "based on resource"@en ;
+    rdfs:label "baziran na resursu"@sr .
+
+:forQuestion rdf:type owl:ObjectProperty ;
+    rdfs:domain :Feedback ;
+    rdfs:range :Question ;
+    rdfs:label "for question"@en .
+
+:providedBy rdf:type owl:ObjectProperty ;
+    rdfs:domain :Feedback ;
+    rdfs:range :User ;
+    rdfs:label "provided by"@en .
+
+# ============================================
+# OBJECT PROPERTIES - Semantic Relations
+# ============================================
+
+:relatedTo rdf:type owl:ObjectProperty , owl:SymmetricProperty ;
+    rdfs:domain :Question ;
+    rdfs:range :Question ;
+    rdfs:label "related to"@en ;
+    rdfs:label "povezano sa"@sr ;
+    rdfs:comment "Indicates semantic similarity between questions"@en .
+
+:hasCapability rdf:type owl:ObjectProperty ;
+    rdfs:domain :LMSTool ;
+    rdfs:label "has capability"@en ;
+    rdfs:label "ima mogućnost"@sr .
+
+# ============================================
+# DATA PROPERTIES - Tool Properties
+# ============================================
+
+:ltiVersion rdf:type owl:DatatypeProperty ;
+    rdfs:domain :LTIProvider ;
+    rdfs:range xsd:string ;
+    rdfs:label "LTI version"@en .
+
+:deploymentId rdf:type owl:DatatypeProperty ;
+    rdfs:domain :LTIProvider ;
+    rdfs:range xsd:string ;
+    rdfs:label "deployment ID"@en .
+
+:clientId rdf:type owl:DatatypeProperty ;
+    rdfs:domain :LTIProvider ;
+    rdfs:range xsd:string ;
+    rdfs:label "client ID"@en .
+
+:versionNumber rdf:type owl:DatatypeProperty ;
+    rdfs:domain :LTIStandard ;
+    rdfs:range xsd:string ;
+    rdfs:label "version number"@en .
+
+:usesAuthentication rdf:type owl:DatatypeProperty ;
+    rdfs:domain :LTIStandard ;
+    rdfs:range xsd:string ;
+    rdfs:label "uses authentication"@en .
+
+# ============================================
+# DATA PROPERTIES - User Properties
+# ============================================
+
+:userId rdf:type owl:DatatypeProperty ;
+    rdfs:domain :User ;
+    rdfs:range xsd:string ;
+    rdfs:label "user ID"@en .
+
+:userName rdf:type owl:DatatypeProperty ;
+    rdfs:domain :User ;
+    rdfs:range xsd:string ;
+    rdfs:label "user name"@en .
+
+:email rdf:type owl:DatatypeProperty ;
+    rdfs:domain :User ;
+    rdfs:range xsd:string ;
+    rdfs:label "email"@en .
+
+# ============================================
+# DATA PROPERTIES - Course Properties
+# ============================================
+
+:courseId rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Course ;
+    rdfs:range xsd:string ;
+    rdfs:label "course ID"@en .
+
+:courseTitle rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Course ;
+    rdfs:range xsd:string ;
+    rdfs:label "course title"@en .
+
+:courseDescription rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Course ;
+    rdfs:range xsd:string ;
+    rdfs:label "course description"@en .
+
+# ============================================
+# DATA PROPERTIES - Q&A Properties
+# ============================================
+
+:questionText rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Question ;
+    rdfs:range rdf:langString ;
+    rdfs:label "question text"@en ;
+    rdfs:label "tekst pitanja"@sr .
+
+:answerText rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Answer ;
+    rdfs:range rdf:langString ;
+    rdfs:label "answer text"@en ;
+    rdfs:label "tekst odgovora"@sr .
+
+:confidenceScore rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Answer ;
+    rdfs:range xsd:float ;
+    rdfs:label "confidence score"@en ;
+    rdfs:label "skorovi poverenja"@sr ;
+    rdfs:comment "Confidence level of the answer (0.0 to 1.0)"@en .
+
+:timestamp rdf:type owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:label "timestamp"@en .
+
+:rating rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Feedback ;
+    rdfs:range xsd:integer ;
+    rdfs:label "rating"@en ;
+    rdfs:comment "Rating from 1 to 5"@en .
+
+:comment rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Feedback ;
+    rdfs:range xsd:string ;
+    rdfs:label "comment"@en .
+
+:generatedAt rdf:type owl:DatatypeProperty ;
+    rdfs:domain :Answer ;
+    rdfs:range xsd:dateTime ;
+    rdfs:label "generated at"@en .
+
+# ============================================
+# INDIVIDUALS - Example LTI Standards
+# ============================================
+
+:Canvas rdf:type :LTIConsumer ;
+    rdfs:label "Canvas LMS" ;
+    :implementsStandard :LTI_1_3 ;
+    rdfs:comment "Instructure Canvas Learning Management System"@en .
+
+:Moodle rdf:type :LTIConsumer ;
+    rdfs:label "Moodle" ;
+    :implementsStandard :LTI_1_3 ;
+    rdfs:comment "Open-source Learning Management System"@en .
+
+# ============================================
+# AXIOMS & RESTRICTIONS
+# ============================================
+
+# A Question must be asked by exactly one User
+:Question rdfs:subClassOf [
+    rdf:type owl:Restriction ;
+    owl:onProperty :askedBy ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# An Answer must answer exactly one Question
+:Answer rdfs:subClassOf [
+    rdf:type owl:Restriction ;
+    owl:onProperty :answersQuestion ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# A ToolLaunch must involve exactly one tool, one user, and one course
+:ToolLaunch rdfs:subClassOf [
+    rdf:type owl:Restriction ;
+    owl:onProperty :launchedTool ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger
+] .
+
+:ToolLaunch rdfs:subClassOf [
+    rdf:type owl:Restriction ;
+    owl:onProperty :byUser ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# Confidence score must be between 0 and 1
+:Answer rdfs:subClassOf [
+    rdf:type owl:Restriction ;
+    owl:onProperty :confidenceScore ;
+    owl:allValuesFrom [
+        rdf:type rdfs:Datatype ;
+        owl:onDatatype xsd:float ;
+        owl:withRestrictions (
+            [ xsd:minInclusive "0.0"^^xsd:float ]
+            [ xsd:maxInclusive "1.0"^^xsd:float ]
+        )
+    ]
+] .
+
+# ============================================
+# END OF ONTOLOGY
+# ============================================

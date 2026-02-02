@@ -1,0 +1,212 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Canvas LMS Platform
+  # ==========================================
+  canvas:
+    image: instructure/canvas-lms:stable
+    container_name: canvas-lms
+    ports:
+      - "3000:3000"
+    environment:
+      - CANVAS_LMS_ADMIN_EMAIL=${CANVAS_LMS_ADMIN_EMAIL}
+      - CANVAS_LMS_ADMIN_PASSWORD=${CANVAS_LMS_ADMIN_PASSWORD}
+      - CANVAS_LMS_ACCOUNT_NAME=FTN Test Institution
+      - CANVAS_LMS_STATS_COLLECTION=opt_out
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+    volumes:
+      - canvas_data:/var/canvas
+      - ./canvas-config:/config
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health_check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ==========================================
+  # PostgreSQL Database for Canvas
+  # ==========================================
+  postgres:
+    image: postgres:14-alpine
+    container_name: canvas-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canvas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Redis Cache for Canvas
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: canvas-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ==========================================
+  # LTI Q&A Tool Provider
+  # ==========================================
+  lti_tool:
+    build: 
+      context: ../lti-tool
+      dockerfile: Dockerfile
+    container_name: lti-qa-tool
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=${FLASK_ENV}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LTI_KEY=${LTI_KEY}
+      - LTI_SECRET=${LTI_SECRET}
+      - CHROMA_HOST=${CHROMA_HOST}
+      - CHROMA_PORT=${CHROMA_PORT}
+      - FUSEKI_URL=${FUSEKI_URL}
+    volumes:
+      - ../lti-tool:/app
+      - vector_db_data:/app/data
+      - ../ontology:/app/ontology:ro
+    depends_on:
+      - chroma
+      - fuseki
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================
+  # ChromaDB Vector Database
+  # ==========================================
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: chromadb
+    ports:
+      - "8001:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenAuthCredentialsProvider
+      - CHROMA_SERVER_AUTH_CREDENTIALS=${CHROMA_AUTH_TOKEN}
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================
+  # Apache Jena Fuseki SPARQL Server
+  # ==========================================
+  fuseki:
+    image: stain/jena-fuseki:latest
+    container_name: jena-fuseki
+    ports:
+      - "3030:3030"
+    environment:
+      - ADMIN_PASSWORD=${FUSEKI_ADMIN_PASSWORD}
+      - JVM_ARGS=-Xmx2g
+    volumes:
+      - fuseki_data:/fuseki
+      - ../ontology:/staging:ro
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/$/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: /jena-fuseki/fuseki-server --loc=/fuseki/databases/lms-tools /lms-tools
+
+  # ==========================================
+  # Nginx Reverse Proxy (Optional - for production)
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - canvas
+      - lti_tool
+    networks:
+      - lms_network
+    profiles:
+      - production
+
+  # ==========================================
+  # Adminer - Database Management (Optional)
+  # ==========================================
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+    networks:
+      - lms_network
+    profiles:
+      - dev
+
+# ==========================================
+# VOLUMES
+# ==========================================
+volumes:
+  canvas_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  vector_db_data:
+    driver: local
+  chroma_data:
+    driver: local
+  fuseki_data:
+    driver: local
+
+# ==========================================
+# NETWORKS
+# ==========================================
+networks:
+  lms_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

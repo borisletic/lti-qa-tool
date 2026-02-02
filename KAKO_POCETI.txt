@@ -1,0 +1,281 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║   INTELIGENTNI Q&A AGENT KAO IMS LTI ALAT SA SEMANTIČKOM ONTOLOGIJOM    ║
+║                                                                           ║
+║   Jedinstveni projekat iz predmeta:                                      ║
+║   - Savremene obrazovne tehnologije i standardi                          ║
+║   - Semantički veb                                                       ║
+║                                                                           ║
+║   FTN Novi Sad © 2026                                                    ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+
+📋 ŠTA STE DOBILI?
+═══════════════════════════════════════════════════════════════════════════
+
+1. 📄 PROJEKTNU DOKUMENTACIJU (Word dokument)
+   - Jedinstveni_Projekat_LTI_QA_Ontologija.docx
+   - Kompletna teorijska osnova
+   - Arhitektura sistema
+   - Detaljna implementacija
+   - Testiranje i rezultati
+
+2. 💻 KOMPLETAN IZVORNI KOD
+   - Flask aplikacija sa LTI 1.3 podrškom
+   - Semantic layer sa RDF/OWL
+   - OWL ontologija u Turtle formatu
+   - Docker Compose infrastruktura
+   - Python skripte za setup
+
+3. 📚 ONTOLOGIJA
+   - lms-tools.ttl - OWL 2 ontologija
+   - Klase, properties, individuals
+   - Restrictions i axiomi
+   - SPARQL upiti
+
+
+🚀 BRZO POKRETANJE (5 KORAKA)
+═══════════════════════════════════════════════════════════════════════════
+
+KORAK 1: INSTALACIJA PREDUSLOVA
+───────────────────────────────────────────────────────────────────────────
+Windows:
+  - Instalirajte Docker Desktop: https://www.docker.com/products/docker-desktop
+  - Instalirajte Git: https://git-scm.com/downloads
+
+Linux/Mac:
+  sudo apt install docker.io docker-compose  # Ubuntu/Debian
+  brew install docker docker-compose          # macOS
+
+
+KORAK 2: PRIPREMA PROJEKTA
+───────────────────────────────────────────────────────────────────────────
+1. Otpakujte ovaj folder na željenu lokaciju
+2. Otvorite terminal/command prompt u tom folderu
+3. Kopirajte .env.example u .env:
+   
+   Windows:   copy .env.example .env
+   Linux/Mac: cp .env.example .env
+
+4. Editujte .env fajl i unesite:
+   - OPENAI_API_KEY (nabavite na https://platform.openai.com)
+   - Ostale ključeve po potrebi
+
+
+KORAK 3: GENERISANJE LTI KLJUČEVA
+───────────────────────────────────────────────────────────────────────────
+cd lti-tool/configs
+
+# Generišite RSA key pair
+openssl genrsa -out private.key 2048
+openssl rsa -in private.key -pubout -out public.key
+
+cd ../..
+
+
+KORAK 4: POKRETANJE SA DOCKEROM
+───────────────────────────────────────────────────────────────────────────
+cd docker
+docker-compose up -d
+
+# Čekajte 5-10 minuta da se Canvas inicijalizuje
+# Možete pratiti progress sa:
+docker-compose logs -f canvas
+
+
+KORAK 5: PRISTUP SISTEMIMA
+───────────────────────────────────────────────────────────────────────────
+Canvas LMS:           http://localhost:3000
+  Username: admin@example.com
+  Password: canvasadmin123
+
+LTI Q&A Tool:         http://localhost:5000
+Fuseki SPARQL:        http://localhost:3030
+ChromaDB:             http://localhost:8001
+
+
+📖 KONFIGURACIJA LTI ALATA U CANVAS-u
+═══════════════════════════════════════════════════════════════════════════
+
+1. Ulogujte se u Canvas kao admin (http://localhost:3000)
+
+2. Idite na: Admin → Developer Keys
+
+3. Kliknite: + Developer Key → + LTI Key
+
+4. Popunite formu:
+   - Key Name: Q&A Inteligentni Asistent
+   - Redirect URIs: http://localhost:5000/launch
+   - JWK Method: Public JWK URL
+   - Public JWK URL: http://localhost:5000/jwks
+   - LTI Advantage Services: omogućite sve
+
+5. Kliknite Save
+
+6. Kopirajte generisan Client ID
+
+7. Otvorite lti-tool/configs/lti-config.json i zamenite:
+   "client_id": "KOPIRANI_CLIENT_ID"
+
+8. Restartujte LTI tool:
+   docker-compose restart lti_tool
+
+9. U Canvas-u: Settings → Apps → + App
+   - Configuration Type: By Client ID
+   - Client ID: VAŠE_CLIENT_ID
+   - Submit
+
+10. Dodajte alat u kurs:
+    - Modules → Add Item → External Tool → Q&A Inteligentni Asistent
+
+
+📚 UPLOAD NASTAVNIH MATERIJALA
+═══════════════════════════════════════════════════════════════════════════
+
+1. Pripremite PDF, DOCX, TXT ili MD fajlove sa nastavnim materijalima
+
+2. Kreirajte folder sa materijalima, npr:
+   mkdir sample-materials
+   # Kopirajte fajlove u ovaj folder
+
+3. Pokrenite upload skriptu:
+   
+   docker-compose exec lti_tool python scripts/upload_materials.py \
+     --course-id COURSE_001 \
+     --materials /path/to/sample-materials \
+     --test
+
+4. Materijali će biti procesovani i upload-ovani u ChromaDB
+
+
+🔬 TESTIRANJE ONTOLOGIJE
+═══════════════════════════════════════════════════════════════════════════
+
+1. Inicijalizujte ontologiju u Fuseki:
+
+   docker-compose exec lti_tool python scripts/init_ontology.py \
+     --fuseki-url http://fuseki:3030 \
+     --sample-data \
+     --test
+
+2. Pristupite Fuseki web interfejsu: http://localhost:3030
+
+3. Kliknite na dataset "lms-tools"
+
+4. Otvorite Query tab
+
+5. Testirajte SPARQL upite, npr:
+
+   PREFIX lms: <http://example.org/lms-tools#>
+   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+   
+   SELECT ?question ?answer WHERE {
+     ?q rdf:type lms:Question .
+     ?q lms:questionText ?question .
+     ?ans lms:answersQuestion ?q .
+     ?ans lms:answerText ?answer .
+   }
+
+
+🎯 TESTIRANJE KOMPLETNOG SISTEMA
+═══════════════════════════════════════════════════════════════════════════
+
+1. Ulogujte se u Canvas kao student
+2. Otvorite kurs gde ste dodali Q&A alat
+3. Kliknite na "Q&A Inteligentni Asistent"
+4. Postavite pitanje, npr: "Šta je IMS LTI standard?"
+5. Dobićete AI-generisan odgovor baziran na materijalima
+
+
+🛠️ TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════
+
+PROBLEM: Canvas se ne pokreće
+REŠENJE: 
+  docker-compose down -v
+  docker-compose up -d
+  # Čekajte 10 minuta
+
+PROBLEM: LTI validacija ne prolazi
+REŠENJE:
+  - Proverite da su private.key i public.key generisani
+  - Verifikujte Client ID u lti-config.json
+  - Testirajte JWKS endpoint: curl http://localhost:5000/jwks
+
+PROBLEM: Nema odgovora na pitanja
+REŠENJE:
+  - Proverite da su materijali upload-ovani
+  - Verifikujte OPENAI_API_KEY u .env
+  - Proverite logove: docker-compose logs lti_tool
+
+PROBLEM: Fuseki ne radi
+REŠENJE:
+  docker-compose restart fuseki
+  # Ponovo inicijalizujte ontologiju
+
+
+📊 STRUKTURA PROJEKTA
+═══════════════════════════════════════════════════════════════════════════
+
+LTI_QA_Projekat_Implementacija/
+│
+├── docker/
+│   └── docker-compose.yml         # Docker orkestrator
+│
+├── lti-tool/                       # Glavni LTI aplikacija
+│   ├── app.py                      # Flask backend
+│   ├── semantic_layer.py           # RDF/OWL logika
+│   ├── requirements.txt            # Python dependencies
+│   ├── Dockerfile
+│   ├── configs/
+│   │   ├── lti-config.json        # LTI konfiguracija
+│   │   ├── private.key            # Generiše se
+│   │   └── public.key             # Generiše se
+│   └── templates/
+│       └── qa_interface.html      # Web UI
+│
+├── ontology/
+│   └── lms-tools.ttl              # OWL ontologija
+│
+├── scripts/
+│   ├── upload_materials.py        # Upload materijala
+│   └── init_ontology.py           # Inicijalizacija ontologije
+│
+├── .env.example                    # Template za env vars
+└── README.md                       # Detaljna dokumentacija
+
+
+🎓 ZA PREDMETE
+═══════════════════════════════════════════════════════════════════════════
+
+SAVREMENE OBRAZOVNE TEHNOLOGIJE I STANDARDI:
+  ✅ IMS LTI 1.3 Advantage implementacija
+  ✅ OAuth 2.0 + OpenID Connect
+  ✅ Canvas LMS integracija
+  ✅ RAG arhitektura za Q&A
+  ✅ Docker deployment
+
+SEMANTIČKI VEB:
+  ✅ OWL 2 DL ontologija
+  ✅ RDF triplet reprezentacija
+  ✅ SPARQL upiti
+  ✅ Apache Jena Fuseki endpoint
+  ✅ Reasoner integracija (opciono)
+
+
+📞 DODATNA PODRŠKA
+═══════════════════════════════════════════════════════════════════════════
+
+Za detaljniju dokumentaciju pogledajte:
+  - README.md (tehnička dokumentacija)
+  - Jedinstveni_Projekat_LTI_QA_Ontologija.docx (teorija + implementacija)
+
+Online resursi:
+  - IMS LTI: https://www.imsglobal.org/spec/lti/v1p3/
+  - OWL 2: https://www.w3.org/TR/owl2-overview/
+  - Canvas API: https://canvas.instructure.com/doc/api/
+
+═══════════════════════════════════════════════════════════════════════════
+                            SREĆNO SA PROJEKTOM! 🚀
+═══════════════════════════════════════════════════════════════════════════
