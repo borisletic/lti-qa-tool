@@ -1,0 +1,3 @@
+production:
+  domain: "localhost:3000"
+  ssl: false

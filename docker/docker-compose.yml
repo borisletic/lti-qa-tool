@@ -19,7 +19,10 @@ services:
       - REDIS_HOST=redis
     volumes:
       - canvas_data:/var/canvas
-      - ./canvas-config:/config
+      - ./canvas-config/database.yml:/usr/src/app/config/database.yml:ro
+      - ./canvas-config/security.yml:/usr/src/app/config/security.yml:ro
+      - ./canvas-config/domain.yml:/usr/src/app/config/domain.yml:ro
+      - ./canvas-config/outgoing_mail.yml:/usr/src/app/config/outgoing_mail.yml:ro
     depends_on:
       - postgres
       - redis
@@ -35,7 +38,7 @@ services:
   # PostgreSQL Database for Canvas
   # ==========================================
   postgres:
-    image: postgres:14-alpine
+    image: postgres:11-alpine
     container_name: canvas-postgres
     environment:
       - POSTGRES_DB=${POSTGRES_DB}

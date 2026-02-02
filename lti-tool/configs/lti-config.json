@@ -6,8 +6,8 @@
     "auth_audience": null,
     "key_set_url": "https://canvas.example.com/api/lti/security/jwks",
     "key_set": null,
-    "private_key_file": "configs/private.key",
-    "public_key_file": "configs/public.key",
+    "private_key_file": "private.key",
+    "public_key_file": "public.key",
     "deployment_ids": ["1"]
   },
   "http://localhost:3000": {
@@ -17,8 +17,8 @@
     "auth_audience": null,
     "key_set_url": "http://localhost:3000/api/lti/security/jwks",
     "key_set": null,
-    "private_key_file": "configs/private.key",
-    "public_key_file": "configs/public.key",
+    "private_key_file": "private.key",
+    "public_key_file": "public.key",
     "deployment_ids": ["1"]
   },
   "https://moodle.org": {
@@ -28,8 +28,8 @@
     "auth_audience": null,
     "key_set_url": "https://moodle.example.com/mod/lti/certs.php",
     "key_set": null,
-    "private_key_file": "configs/private.key",
-    "public_key_file": "configs/public.key",
+    "private_key_file": "private.key",
+    "public_key_file": "public.key",
     "deployment_ids": ["1"]
   }
 }

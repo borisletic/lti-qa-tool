@@ -1,0 +1,10 @@
+production:
+  adapter: postgresql
+  encoding: utf8
+  database: canvas
+  host: postgres
+  username: canvas
+  password: canvas_pg_pass_123
+  timeout: 5000
+  pool: 10
+  sslmode: disable
