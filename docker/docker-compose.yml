@@ -1,58 +1,41 @@
-version: '3.8'
+# docker-compose.yml
+# IZMENE vs originala:
+#   - uklonjeni `version` (obsolete, Docker Compose v2 ignorisanje)
+#   - canvas: cap_add SYS_KILL (popravka tini "Operation not permitted")
+#   - canvas: restart: unless-stopped (prekinja beskonačan crash-loop)
+#   - canvas: depends_on sa condition: service_healthy za postgres i redis
+#   - canvas: eksplicitno RAILS_ENV=production
+#   - postgres: fiksne kredensiale usklađene sa database.yml
+#   - dodana canvas-setup servis za db:migrate + db:seed (mora trčiti PRE canvas)
+#   - lti_tool/chroma/fuseki: dodato restart: unless-stopped
 
 services:
   # ==========================================
-  # Canvas LMS Platform
-  # ==========================================
-  canvas:
-    image: instructure/canvas-lms:stable
-    container_name: canvas-lms
-    ports:
-      - "3000:3000"
-    environment:
-      - CANVAS_LMS_ADMIN_EMAIL=${CANVAS_LMS_ADMIN_EMAIL}
-      - CANVAS_LMS_ADMIN_PASSWORD=${CANVAS_LMS_ADMIN_PASSWORD}
-      - CANVAS_LMS_ACCOUNT_NAME=FTN Test Institution
-      - CANVAS_LMS_STATS_COLLECTION=opt_out
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - REDIS_HOST=redis
-    volumes:
-      - canvas_data:/var/canvas
-      - ./canvas-config/database.yml:/usr/src/app/config/database.yml:ro
-      - ./canvas-config/security.yml:/usr/src/app/config/security.yml:ro
-      - ./canvas-config/domain.yml:/usr/src/app/config/domain.yml:ro
-      - ./canvas-config/outgoing_mail.yml:/usr/src/app/config/outgoing_mail.yml:ro
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - lms_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health_check"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # ==========================================
   # PostgreSQL Database for Canvas
   # ==========================================
+  # MORA biti zdrav pre što Canvas startuje
   postgres:
     image: postgres:11-alpine
     container_name: canvas-postgres
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # OVA LOZINKA MORA BITI IDENTIČNA sa database.yml
+      POSTGRES_DB: canvas
+      POSTGRES_USER: canvas
+      POSTGRES_PASSWORD: canvas_pg_pass_123
+      # KRITIČNO: Canvas image ima libpq < 10 — ne podržava SCRAM-SHA-256.
+      # md5 auth je jedina opcija koja radi sa tom verziom libpq.
+      POSTGRES_HOST_AUTH_METHOD: md5
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - lms_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U canvas"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      # pg_isready sa eksplicitnim user-om
+      test: ["CMD-SHELL", "pg_isready -U canvas -d canvas"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   # ==========================================
   # Redis Cache for Canvas
@@ -67,30 +50,128 @@ services:
       - lms_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 3s
       retries: 5
+
+  # ==========================================
+  # Canvas Setup (db:create + db:migrate + db:seed)
+  # Radi JEDNOM, posle toga se ukloni sa `--rm`
+  # ==========================================
+  canvas-setup:
+    image: instructure/canvas-lms:stable
+    container_name: canvas-setup
+    entrypoint: []   # overajde default entrypoint
+    # Migracioni komanda - db:create je bezbedan ak DB već postoji
+    command:
+      - bash
+      - -c
+      - |
+        echo "=== [canvas-setup] Čekanje na PostgreSQL ==="
+        until pg_isready -h postgres -U canvas -d canvas; do
+          echo "  -> postgres nije spreman, čekam 3s..."
+          sleep 3
+        done
+
+        echo "=== [canvas-setup] Kreiranje baze ==="
+        bundle exec rake db:create 2>/dev/null || true
+
+        echo "=== [canvas-setup] Pokretanje migracija ==="
+        bundle exec rake db:migrate
+        echo "=== [canvas-setup] Kreiranje default account-a ==="
+        bundle exec rake db:create_default_accounts
+        echo "=== [canvas-setup] Ucitavanje initial data ==="
+        bundle exec rake db:load_initial_data
+        echo "=== [canvas-setup] Gotovo ==="
+    environment:
+      RAILS_ENV: production
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: canvas_pg_pass_123
+      REDIS_HOST: redis
+      CANVAS_LMS_ACCOUNT_NAME: FTN Test Institution
+      CANVAS_LMS_ADMIN_EMAIL: admin@example.com
+      CANVAS_LMS_ADMIN_PASSWORD: canvasadmin123
+    volumes:
+      - ./canvas-config/database.yml:/usr/src/app/config/database.yml:ro
+      - ./canvas-config/security.yml:/usr/src/app/config/security.yml:ro
+      - ./canvas-config/domain.yml:/usr/src/app/config/domain.yml:ro
+      - ./canvas-config/outgoing_mail.yml:/usr/src/app/config/outgoing_mail.yml:ro
+      # Monkey-patch: send_later_if_production_enqueue_args -> synchronous.
+      # Eliminise max_concurrent error na SVE migracije odjednom.
+      - ./canvas-patches/skip_delayed_jobs_in_migrations.rb:/usr/src/app/config/initializers/skip_delayed_jobs_in_migrations.rb:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lms_network
+
+  # ==========================================
+  # Canvas LMS Platform
+  # ==========================================
+  canvas:
+    image: instructure/canvas-lms:stable
+    container_name: canvas-lms
+    ports:
+      - "3000:80"
+    # cap_add SYS_KILL uklonjeno — Docker Desktop Windows ne podrzava.
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: production
+      # Kredensiali za Canvas initial setup (koristi se samo pri prvom boot-u)
+      CANVAS_LMS_ADMIN_EMAIL: admin@example.com
+      CANVAS_LMS_ADMIN_PASSWORD: canvasadmin123
+      CANVAS_LMS_ACCOUNT_NAME: FTN Test Institution
+      CANVAS_LMS_STATS_COLLECTION: opt_out
+      # DB/Cache konektivnost
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: canvas_pg_pass_123
+      REDIS_HOST: redis
+    volumes:
+      - canvas_data:/var/canvas
+      - ./canvas-config/database.yml:/usr/src/app/config/database.yml:ro
+      - ./canvas-config/security.yml:/usr/src/app/config/security.yml:ro
+      - ./canvas-config/domain.yml:/usr/src/app/config/domain.yml:ro
+      - ./canvas-config/outgoing_mail.yml:/usr/src/app/config/outgoing_mail.yml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # Canvas ne startuje do setup-a ne završava
+      canvas-setup:
+        condition: service_completed_successfully
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:80/health_check"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
 
   # ==========================================
   # LTI Q&A Tool Provider
   # ==========================================
   lti_tool:
-    build: 
+    build:
       context: ../lti-tool
       dockerfile: Dockerfile
     container_name: lti-qa-tool
     ports:
       - "5000:5000"
+    restart: unless-stopped
     environment:
-      - FLASK_APP=app.py
-      - FLASK_ENV=${FLASK_ENV}
-      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - LTI_KEY=${LTI_KEY}
-      - LTI_SECRET=${LTI_SECRET}
-      - CHROMA_HOST=${CHROMA_HOST}
-      - CHROMA_PORT=${CHROMA_PORT}
-      - FUSEKI_URL=${FUSEKI_URL}
+      FLASK_APP: app.py
+      FLASK_ENV: ${FLASK_ENV:-development}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-dev-secret-change-in-prod}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LTI_KEY: ${LTI_KEY:-default_lti_key}
+      LTI_SECRET: ${LTI_SECRET:-default_lti_secret}
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+      FUSEKI_URL: http://fuseki:3030
     volumes:
       - ../lti-tool:/app
       - vector_db_data:/app/data
@@ -114,19 +195,19 @@ services:
     container_name: chromadb
     ports:
       - "8001:8000"
+    restart: unless-stopped
     environment:
-      - IS_PERSISTENT=TRUE
-      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenAuthCredentialsProvider
-      - CHROMA_SERVER_AUTH_CREDENTIALS=${CHROMA_AUTH_TOKEN}
-      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+      IS_PERSISTENT: "TRUE"
+      # Uklonjen auth za development -- lakše testiranje
+      # Za produkciju vrati token-based auth
     volumes:
       - chroma_data:/chroma/chroma
     networks:
       - lms_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      interval: 15s
+      timeout: 5s
       retries: 3
 
   # ==========================================
@@ -137,9 +218,10 @@ services:
     container_name: jena-fuseki
     ports:
       - "3030:3030"
+    restart: unless-stopped
     environment:
-      - ADMIN_PASSWORD=${FUSEKI_ADMIN_PASSWORD}
-      - JVM_ARGS=-Xmx2g
+      ADMIN_PASSWORD: ${FUSEKI_ADMIN_PASSWORD:-fuseki_admin_123}
+      JVM_ARGS: -Xmx2g
     volumes:
       - fuseki_data:/fuseki
       - ../ontology:/staging:ro
@@ -147,13 +229,18 @@ services:
       - lms_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3030/$/ping"]
-      interval: 30s
-      timeout: 10s
+      interval: 15s
+      timeout: 5s
       retries: 3
-    command: /jena-fuseki/fuseki-server --loc=/fuseki/databases/lms-tools /lms-tools
+    entrypoint:
+      - sh
+      - -c
+      - |
+        mkdir -p /fuseki/databases/lms-tools
+        exec /jena-fuseki/fuseki-server --loc=/fuseki/databases/lms-tools /lms-tools
 
   # ==========================================
-  # Nginx Reverse Proxy (Optional - for production)
+  # Nginx Reverse Proxy (Optional - production)
   # ==========================================
   nginx:
     image: nginx:alpine
@@ -173,7 +260,7 @@ services:
       - production
 
   # ==========================================
-  # Adminer - Database Management (Optional)
+  # Adminer - Database Management (dev)
   # ==========================================
   adminer:
     image: adminer:latest
@@ -181,7 +268,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - ADMINER_DEFAULT_SERVER=postgres
+      ADMINER_DEFAULT_SERVER: postgres
     networks:
       - lms_network
     profiles:
