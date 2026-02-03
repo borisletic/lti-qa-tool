@@ -205,7 +205,7 @@ services:
     networks:
       - lms_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/8000"]
       interval: 15s
       timeout: 5s
       retries: 3
