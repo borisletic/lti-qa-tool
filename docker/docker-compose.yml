@@ -238,6 +238,25 @@ services:
       - |
         mkdir -p /fuseki/databases/lms-tools
         exec /jena-fuseki/fuseki-server --loc=/fuseki/databases/lms-tools /lms-tools
+  
+
+  # ==========================================
+  # Ollama - Local LLM
+  # ==========================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - lms_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ==========================================
   # Nginx Reverse Proxy (Optional - production)
@@ -289,6 +308,8 @@ volumes:
   chroma_data:
     driver: local
   fuseki_data:
+    driver: local
+  ollama_data:
     driver: local
 
 # ==========================================

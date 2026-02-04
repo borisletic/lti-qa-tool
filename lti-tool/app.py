@@ -8,11 +8,7 @@ from flask_cors import CORS
 from pylti1p3.contrib.flask import FlaskOIDCLogin, FlaskMessageLaunch, FlaskRequest
 from pylti1p3.tool_config import ToolConfJsonFile
 from pylti1p3.registration import Registration
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+
 import os
 import uuid
 from datetime import datetime
@@ -31,27 +27,9 @@ tool_conf = ToolConfJsonFile('configs/lti-config.json')
 # Initialize Semantic Layer
 semantic_layer = SemanticLayer('ontology/lms-tools.ttl')
 
-# Custom prompt template for educational Q&A
-QA_PROMPT_TEMPLATE = """Ti si stručni obrazovni asistent koji pomaže studentima da razumeju nastavni materijal.
 
-Kontekst iz nastavnih materijala:
-{context}
 
-Pitanje studenta: {question}
 
-Uputstva:
-- Daj jasan, precizan i razumljiv odgovor baziran na priloženom kontekstu
-- Ako odgovor nije u kontekstu, iskreno to navedi
-- Koristi primere gde je to moguće
-- Odgovori na srpskom jeziku
-- Budi prijateljski nastrojen ali profesionalan
-
-Odgovor:"""
-
-QA_PROMPT = PromptTemplate(
-    template=QA_PROMPT_TEMPLATE,
-    input_variables=["context", "question"]
-)
 
 
 @app.route('/health', methods=['GET'])
@@ -88,58 +66,55 @@ def login():
 @app.route('/launch', methods=['POST'])
 def launch():
     """
-    LTI Launch endpoint - prijem i validacija LTI launch zahteva
+    LTI 1.1 Launch endpoint (Canvas stable ne podržava LTI 1.3)
     """
-    flask_request = FlaskRequest()
-    launch = FlaskMessageLaunch(
-        flask_request,
-        tool_conf,
-        launch_data_storage=get_launch_data_storage()
-    )
-    
-    # Validate launch request
-    launch_data = launch.get_launch_data()
-    
-    # Extract context information
-    user_id = launch_data.get('sub')
-    user_name = launch_data.get('name', 'Student')
-    user_email = launch_data.get('email', '')
-    
-    context = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/context', {})
-    course_id = context.get('id', 'default')
-    course_label = context.get('label', 'Course')
-    course_title = context.get('title', 'Unknown Course')
-    
-    roles = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
-    is_instructor = any('Instructor' in role for role in roles)
-    
-    # Store session data
-    session['user_id'] = user_id
-    session['user_name'] = user_name
-    session['course_id'] = course_id
-    session['course_title'] = course_title
-    session['is_instructor'] = is_instructor
-    
-    # Log launch to semantic layer
-    semantic_layer.log_tool_launch(
-        tool_uri=f"http://example.org/tools/{uuid.uuid4()}",
-        course_uri=f"http://example.org/courses/{course_id}",
-        user_uri=f"http://example.org/users/{user_id}"
-    )
-    
-    return render_template(
-        'qa_interface.html',
-        user_name=user_name,
-        course_title=course_title,
-        course_id=course_id,
-        is_instructor=is_instructor
-    )
+    try:
+        from flask import request as flask_request
+        
+        # Extract LTI 1.1 parameters
+        user_id = flask_request.form.get('user_id', 'unknown')
+        user_name = flask_request.form.get('lis_person_name_full', 'Student')
+        user_email = flask_request.form.get('lis_person_contact_email_primary', '')
+        
+        course_id = flask_request.form.get('custom_canvas_course_id') or flask_request.form.get('context_id', 'default')
+        course_title = flask_request.form.get('context_title', 'Unknown Course')
+        
+        roles = flask_request.form.get('roles', '').split(',')
+        is_instructor = any('Instructor' in role for role in roles)
+        
+        # Store session
+        session['user_id'] = user_id
+        session['user_name'] = user_name
+        session['course_id'] = course_id
+        session['course_title'] = course_title
+        session['is_instructor'] = is_instructor
+        
+        # Log launch
+        semantic_layer.log_tool_launch(
+            tool_uri=f"http://example.org/tools/{uuid.uuid4()}",
+            course_uri=f"http://example.org/courses/{course_id}",
+            user_uri=f"http://example.org/users/{user_id}"
+        )
+        
+        return render_template(
+            'qa_interface.html',
+            user_name=user_name,
+            course_title=course_title,
+            course_id=course_id,
+            is_instructor=is_instructor
+        )
+        
+    except Exception as e:
+        app.logger.error(f"Launch error: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/ask', methods=['POST'])
 def ask_question():
     """
-    API endpoint za postavljanje pitanja
+    API endpoint - MOCK verzija
     """
     try:
         data = request.json
@@ -150,93 +125,24 @@ def ask_question():
         if not question:
             return jsonify({'error': 'Pitanje ne može biti prazno'}), 400
         
-        # Check for similar questions in semantic layer
-        similar_questions = semantic_layer.find_similar_questions(question, course_id)
-        
-        if similar_questions and similar_questions[0]['confidence'] > 0.85:
-            # Return cached answer with high confidence
-            cached = similar_questions[0]
-            return jsonify({
-                'answer': cached['answer'],
-                'confidence': cached['confidence'],
-                'cached': True,
-                'sources': []
-            })
-        
-        # Load course materials from vector database
-        vector_db_path = f"./data/courses/{course_id}"
-        
-        if not os.path.exists(vector_db_path):
-            return jsonify({
-                'error': 'Nastavni materijali za ovaj kurs još nisu učitani. Molimo kontaktirajte predavača.',
-                'answer': None
-            }), 404
-        
-        # Initialize retriever
-        embeddings = OpenAIEmbeddings(
-            openai_api_key=os.environ.get('OPENAI_API_KEY')
-        )
-        vectorstore = Chroma(
-            persist_directory=vector_db_path,
-            embedding_function=embeddings
-        )
-        
-        # Create QA chain
-        llm = ChatOpenAI(
-            model_name="gpt-4",
-            temperature=0.2,
-            openai_api_key=os.environ.get('OPENAI_API_KEY')
-        )
-        
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=vectorstore.as_retriever(
-                search_type="similarity",
-                search_kwargs={"k": 3}
-            ),
-            return_source_documents=True,
-            chain_type_kwargs={"prompt": QA_PROMPT}
-        )
-        
-        # Generate answer
-        result = qa_chain({"query": question})
-        answer = result['result']
-        source_docs = result['source_documents']
-        
-        # Extract sources
-        sources = []
-        for doc in source_docs:
-            sources.append({
-                'content': doc.page_content[:200] + '...',
-                'metadata': doc.metadata
-            })
-        
-        # Calculate confidence (simple heuristic)
-        confidence = min(0.95, 0.6 + (len(answer) / 500) * 0.3)
-        
-        # Log to semantic layer
-        semantic_layer.register_qa_session(
-            question_text=question,
-            answer_text=answer,
-            course_id=course_id,
-            user_id=user_id,
-            confidence=confidence
-        )
+        # Simple mock
+        if 'lti' in question.lower():
+            answer = "LTI (Learning Tools Interoperability) je standard za integraciju eksternih alata u LMS platforme. Canvas koristi LTI 1.1 verziju."
+            confidence = 0.9
+        else:
+            answer = f"Primio sam pitanje: '{question}'. Sistem je trenutno u test modu."
+            confidence = 0.6
         
         return jsonify({
             'answer': answer,
             'confidence': confidence,
             'cached': False,
-            'sources': sources
+            'sources': []
         })
         
     except Exception as e:
-        app.logger.error(f"Error processing question: {str(e)}")
-        return jsonify({
-            'error': 'Došlo je do greške pri obradi pitanja. Molimo pokušajte ponovo.',
-            'details': str(e) if app.debug else None
-        }), 500
+        app.logger.error(f"Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/feedback', methods=['POST'])
@@ -272,11 +178,34 @@ def upload_materials():
 
 def get_launch_data_storage():
     """
-    Factory function for launch data storage
-    U produkciji koristiti Redis ili database
+    Factory function for launch data storage - compatible with PyLTI1p3 v2.0.0
     """
-    from pylti1p3.session import FlaskSessionService
-    return FlaskSessionService(request)
+    from flask import session
+    
+    class SimpleLaunchDataStorage:
+        _storage = {}
+        
+        def __init__(self):
+            self._request = None
+        
+        def set_request(self, flask_request):
+            self._request = flask_request
+        
+        def get_session_cookie_name(self):
+            return 'session'
+        
+        def get_launch_data(self, key):
+            return session.get(f'lti_{key}') or self._storage.get(key)
+        
+        def save_launch_data(self, key, value):
+            session[f'lti_{key}'] = value
+            self._storage[key] = value
+            return True
+        
+        def check_nonce(self, nonce):
+            return True
+    
+    return SimpleLaunchDataStorage()
 
 
 if __name__ == '__main__':
