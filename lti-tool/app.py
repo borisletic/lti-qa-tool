@@ -8,6 +8,7 @@ from flask_cors import CORS
 from pylti1p3.contrib.flask import FlaskOIDCLogin, FlaskMessageLaunch, FlaskRequest
 from pylti1p3.tool_config import ToolConfJsonFile
 from pylti1p3.registration import Registration
+from rag_engine import get_rag_engine
 
 import os
 import uuid
@@ -114,36 +115,97 @@ def launch():
 @app.route('/api/ask', methods=['POST'])
 def ask_question():
     """
-    API endpoint - MOCK verzija
+    API endpoint za postavljanje pitanja - RAG sa Ollama
     """
     try:
+        app.logger.info(f"=== Q&A REQUEST ===")
+        app.logger.info(f"Session data: {dict(session)}")
+        app.logger.info(f"Course ID: {session.get('course_id', 'default')}")
         data = request.json
         question = data.get('question', '').strip()
-        course_id = session.get('course_id', 'default')
+        course_id = data.get('course_id', 'default')  # ← IZ REQUEST BODY
         user_id = session.get('user_id', 'anonymous')
         
         if not question:
             return jsonify({'error': 'Pitanje ne može biti prazno'}), 400
         
-        # Simple mock
-        if 'lti' in question.lower():
-            answer = "LTI (Learning Tools Interoperability) je standard za integraciju eksternih alata u LMS platforme. Canvas koristi LTI 1.1 verziju."
-            confidence = 0.9
-        else:
-            answer = f"Primio sam pitanje: '{question}'. Sistem je trenutno u test modu."
-            confidence = 0.6
+        # Dobij RAG engine za ovaj kurs
+        rag = get_rag_engine(course_id)
+        
+        # Pozovi RAG pipeline
+        result = rag.ask(question)
+        
+        # Log u semantic layer
+        semantic_layer.register_qa_session(
+            question_text=question,
+            answer_text=result['answer'],
+            course_id=course_id,
+            user_id=user_id,
+            confidence=result['confidence']
+        )
         
         return jsonify({
-            'answer': answer,
-            'confidence': confidence,
+            'answer': result['answer'],
+            'confidence': result['confidence'],
             'cached': False,
-            'sources': []
+            'sources': result['sources']
         })
         
     except Exception as e:
-        app.logger.error(f"Error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Error processing question: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        return jsonify({
+            'error': 'Došlo je do greške pri obradi pitanja.',
+            'details': str(e)
+        }), 500
 
+
+@app.route('/api/debug/session', methods=['GET'])
+def debug_session():
+    """Debug endpoint - prikazuje session data"""
+    return jsonify({
+        'session': dict(session),
+        'keys': list(session.keys()),
+        'course_id': session.get('course_id', 'NOT_SET')
+    })
+
+@app.route('/api/admin/upload-document', methods=['POST'])
+def upload_document():
+    """
+    Admin endpoint za upload nastavnih materijala
+    Dostupno samo instruktorima
+    """
+    if not session.get('is_instructor', False):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        # Očekuje se text content u JSON
+        data = request.json
+        text = data.get('text', '')
+        filename = data.get('filename', 'document.txt')
+        course_id = session.get('course_id', 'default')
+        
+        if not text:
+            return jsonify({'error': 'Prazan dokument'}), 400
+        
+        # Dodaj u RAG engine
+        rag = get_rag_engine(course_id)
+        success = rag.add_document(text, metadata={'filename': filename})
+        
+        if success:
+            stats = rag.get_collection_stats()
+            return jsonify({
+                'status': 'success',
+                'message': f'Dokument {filename} uspješno upload-ovan',
+                'stats': stats
+            })
+        else:
+            return jsonify({'error': 'Greška pri upload-u'}), 500
+            
+    except Exception as e:
+        app.logger.error(f"Upload error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/feedback', methods=['POST'])
 def submit_feedback():
