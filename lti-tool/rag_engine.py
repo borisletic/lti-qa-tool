@@ -72,7 +72,7 @@ class RAGEngine:
         
         try:
             # Podijeli na chunk-ove (500 karaktera)
-            chunks = self._chunk_text(text, chunk_size=500, overlap=50)
+            chunks = self._chunk_text(text, chunk_size=800, overlap=100)
             
             for i, chunk in enumerate(chunks):
                 # Generiši embedding
@@ -151,7 +151,7 @@ class RAGEngine:
 
 PRAVILA:
 - Odgovori SAMO na osnovu informacija iz konteksta ispod
-- Ako informacija NIJE u kontekstu, odgovori: "Ne mogu odgovoriti na osnovu dostupnih materijala"
+- Ako informacija NIJE u kontekstu, reci kratko da potrebna informacija nije pronađena u materijalima. Ne nagađaj i ne izmišljaj.
 - NE izmišljaj informacije
 - Odgovaraj NA SRPSKOM JEZIKU
 - Budi precizan i koncizan
@@ -217,7 +217,7 @@ ODGOVOR (samo na osnovu konteksta iznad):"""
             Dict sa answer, confidence, sources
         """
         # Retrieve
-        chunks = self.retrieve_relevant_chunks(question, top_k=3)
+        chunks = self.retrieve_relevant_chunks(question, top_k=5)
         
         if not chunks:
             return {
