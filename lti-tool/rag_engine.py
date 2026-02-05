@@ -146,27 +146,35 @@ class RAGEngine:
         # Sastavi kontekst
         context = "\n\n".join([chunk['content'] for chunk in context_chunks])
         
-        # Prompt za Ollama
-        prompt = f"""Na osnovu sledećeg konteksta iz nastavnih materijala, odgovori na pitanje.
+        # POBOLJŠAN PROMPT - stroža instrukcija
+        prompt = f"""Ti si obrazovni asistent. Tvoj zadatak je da odgovoriš na pitanje ISKLJUČIVO na osnovu datog konteksta.
 
-KONTEKST:
+PRAVILA:
+- Odgovori SAMO na osnovu informacija iz konteksta ispod
+- Ako informacija NIJE u kontekstu, odgovori: "Ne mogu odgovoriti na osnovu dostupnih materijala"
+- NE izmišljaj informacije
+- Odgovaraj NA SRPSKOM JEZIKU
+- Budi precizan i koncizan
+
+KONTEKST IZ NASTAVNIH MATERIJALA:
 {context}
 
-PITANJE: {question}
+PITANJE STUDENTA: {question}
 
-ODGOVOR (odgovori na srpskom jeziku, kratko i jasno):"""
+ODGOVOR (samo na osnovu konteksta iznad):"""
         
         try:
             # Pozovi Ollama API
             response = requests.post(
                 f"{self.ollama_host}/api/generate",
                 json={
-                    "model": "llama3.2:1b",
+                    "model": "mistral",
                     "prompt": prompt,
                     "stream": False,
                     "options": {
-                        "temperature": 0.7,
-                        "top_p": 0.9
+                        "temperature": 0.3,
+                        "top_p": 0.9,
+                        "num_predict": 512
                     }
                 },
                 timeout=60
