@@ -212,7 +212,7 @@ services:
       retries: 3
 
   # ==========================================
-  # Apache Jena Fuseki SPARQL Server
+  # Apache Jena Fuseki SPARQL Server (NO AUTH)
   # ==========================================
   fuseki:
     image: stain/jena-fuseki:latest
@@ -221,11 +221,10 @@ services:
       - "3030:3030"
     restart: unless-stopped
     environment:
-      ADMIN_PASSWORD: ${FUSEKI_ADMIN_PASSWORD:-fuseki_admin_123}
       JVM_ARGS: -Xmx2g
     volumes:
       - fuseki_data:/fuseki
-      - ../ontology:/staging:ro
+      - ../ontology:/ontology:ro
     networks:
       - lms_network
     healthcheck:
@@ -237,8 +236,16 @@ services:
       - sh
       - -c
       - |
+        # Kreiraj TDB2 dataset ako ne postoji
         mkdir -p /fuseki/databases/lms-tools
-        exec /jena-fuseki/fuseki-server --loc=/fuseki/databases/lms-tools /lms-tools
+        
+        # Kopiraj ontologiju ako postoji
+        if [ -f /ontology/lms-tools.ttl ]; then
+          cp /ontology/lms-tools.ttl /fuseki/databases/lms-tools/data.ttl
+        fi
+        
+        # Pokreni Fuseki BEZ autentifikacije (--auth=disabled)
+        exec /jena-fuseki/fuseki-server --tdb2 --loc=/fuseki/databases/lms-tools --update /lms-tools
   
 
   # ==========================================
