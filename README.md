@@ -17,7 +17,7 @@ Ovaj projekat implementira **inteligentnog AI agenta** za pitanja i odgovore koj
 
 - ✅ **IMS LTI 1.1** - Standardizovana integracija sa Canvas LMS
 - ✅ **RAG arhitektura** - Odgovori bazirani na nastavnim materijalima
-- ✅ **Ollama LLM** - Lokalni AI model (llama3.2:1b) - **BESPLATNO**
+- ✅ **Ollama LLM** - Lokalni AI model (mistral) - **BESPLATNO**
 - ✅ **Sentence Transformers** - Besplatni embeddings za semantic search
 - ✅ **ChromaDB** - Vector database za čuvanje dokumenata
 - ✅ **OWL 2 Ontologija** - 304 RDF triples u Apache Jena Fuseki
@@ -51,7 +51,7 @@ Ovaj projekat implementira **inteligentnog AI agenta** za pitanja i odgovore koj
           ↓                   ↓                   ↓
     ┌──────────┐      ┌─────────────┐     ┌──────────────┐
     │ ChromaDB │      │ Apache Jena │     │    Ollama    │
-    │ Vectors  │      │   Fuseki    │     │  llama3.2:1b │
+    │ Vectors  │      │   Fuseki    │     │  mistral     │
     └──────────┘      │  (SPARQL)   │     └──────────────┘
                       └─────────────┘
 ```
@@ -67,7 +67,7 @@ Ovaj projekat implementira **inteligentnog AI agenta** za pitanja i odgovore koj
 - **Gunicorn** - Production WSGI server
 
 ### AI & Machine Learning
-- **Ollama** - Lokalni LLM server (llama3.2:1b model, 1.3GB)
+- **Ollama** - Lokalni LLM server (mistral, 4.4GB)
 - **Sentence Transformers 2.2** - Multilingual embeddings
 - **ChromaDB 0.4** - Vector database
 
