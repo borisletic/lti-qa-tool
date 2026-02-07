@@ -177,6 +177,7 @@ services:
       - ../lti-tool:/app
       - vector_db_data:/app/data
       - ../ontology:/app/ontology:ro
+      - huggingface_cache:/root/.cache/torch/sentence_transformers
     depends_on:
       - chroma
       - fuseki
@@ -319,6 +320,8 @@ volumes:
   fuseki_data:
     driver: local
   ollama_data:
+    driver: local
+  huggingface_cache: 
     driver: local
 
 # ==========================================
