@@ -269,6 +269,236 @@ def get_launch_data_storage():
     
     return SimpleLaunchDataStorage()
 
+@app.route('/api/upload-material', methods=['POST'])
+def upload_material():
+    """
+    Upload nastavnog materijala direktno iz UI-ja
+    Podržava: TXT, MD, PDF, DOCX
+    """
+    #if not session.get('is_instructor', False):
+     #   return jsonify({'error': 'Unauthorized - samo instruktori mogu upload-ovati materijale'}), 403
+    
+    try:
+        # Proveri da li fajl postoji
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        course_id = request.form.get('course_id', 'default')
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        filename = file.filename
+        ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+        
+        app.logger.info(f"Upload attempt: {filename} (ext: {ext})")
+        
+        # Procesiranje fajla na osnovu tipa
+        content = None
+        
+        if ext in ['txt', 'md']:
+            # Plain text
+            content = file.read().decode('utf-8', errors='ignore')
+        
+        elif ext == 'pdf':
+            # PDF processing
+            try:
+                from PyPDF2 import PdfReader
+                import io
+                
+                pdf_bytes = file.read()
+                pdf = PdfReader(io.BytesIO(pdf_bytes))
+                
+                pages_text = []
+                for page_num, page in enumerate(pdf.pages):
+                    try:
+                        text = page.extract_text()
+                        if text.strip():
+                            pages_text.append(text)
+                    except Exception as e:
+                        app.logger.warning(f"Error extracting page {page_num}: {e}")
+                
+                content = '\n\n'.join(pages_text)
+                
+                if not content.strip():
+                    return jsonify({'error': 'PDF je prazan ili nije mogao biti pročitan'}), 400
+                
+            except Exception as e:
+                app.logger.error(f"PDF processing error: {e}")
+                return jsonify({'error': f'PDF greška: {str(e)}'}), 400
+        
+        elif ext == 'docx':
+            # DOCX processing
+            try:
+                from docx import Document
+                import io
+                
+                docx_bytes = file.read()
+                doc = Document(io.BytesIO(docx_bytes))
+                
+                paragraphs = [para.text for para in doc.paragraphs if para.text.strip()]
+                content = '\n\n'.join(paragraphs)
+                
+                if not content.strip():
+                    return jsonify({'error': 'DOCX je prazan'}), 400
+                
+            except Exception as e:
+                app.logger.error(f"DOCX processing error: {e}")
+                return jsonify({'error': f'DOCX greška: {str(e)}'}), 400
+        
+        else:
+            return jsonify({'error': f'Nepodržan format: {ext}'}), 400
+        
+        # Provera da sadržaj nije prazan
+        if not content or not content.strip():
+            return jsonify({'error': 'Fajl je prazan ili nečitljiv'}), 400
+        
+        # Upload u ChromaDB
+        rag = get_rag_engine(course_id)
+        success = rag.add_document(content, {
+            'filename': filename,
+            'course_id': course_id,
+            'file_type': ext
+        })
+        
+        if success:
+            # Izračunaj broj chunks
+            chunks_count = len(content) // 800 + 1
+            
+            app.logger.info(f"Upload success: {filename} ({chunks_count} chunks)")
+            
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'chunks': chunks_count,
+                'size': len(content)
+            })
+        else:
+            return jsonify({'error': 'Upload u ChromaDB nije uspeo'}), 500
+            
+    except Exception as e:
+        app.logger.error(f"Upload error: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': f'Server greška: {str(e)}'}), 500
+
+@app.route('/api/materials', methods=['GET'])
+def list_materials():
+    """
+    Lista svih materijala u ChromaDB
+    """
+    try:
+        course_id = request.args.get('course_id', '1')
+        
+        app.logger.info(f"Fetching materials for course {course_id}")
+        
+        # Get RAG engine
+        rag = get_rag_engine(course_id)
+        
+        if not rag.collection:
+            return jsonify({
+                'total_files': 0,
+                'total_chunks': 0,
+                'files': []
+            })
+        
+        # Get all items from collection
+        collection = rag.collection
+        results = collection.get()
+        
+        if not results['ids']:
+            return jsonify({
+                'total_files': 0,
+                'total_chunks': 0,
+                'files': []
+            })
+        
+        # Group by filename
+        files = {}
+        for chunk_id in results['ids']:
+            # Extract filename from chunk_id (format: "filename_N")
+            parts = chunk_id.rsplit('_', 1)
+            if len(parts) == 2:
+                filename = parts[0]
+                metadata = results['metadatas'][results['ids'].index(chunk_id)] if results.get('metadatas') else {}
+                
+                if filename not in files:
+                    files[filename] = {
+                        'chunks': 0,
+                        'type': metadata.get('file_type', 'unknown')
+                    }
+                files[filename]['chunks'] += 1
+        
+        # Format response
+        files_list = [
+            {
+                'filename': name,
+                'chunks': info['chunks'],
+                'type': info['type']
+            }
+            for name, info in sorted(files.items())
+        ]
+        
+        return jsonify({
+            'total_files': len(files),
+            'total_chunks': len(results['ids']),
+            'files': files_list
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error listing materials: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/delete-material', methods=['POST'])
+def delete_material():
+    """
+    Briše specifičan materijal iz ChromaDB
+    """
+    try:
+        data = request.json
+        filename = data.get('filename')
+        course_id = data.get('course_id', '1')
+        
+        if not filename:
+            return jsonify({'error': 'Filename required'}), 400
+        
+        app.logger.info(f"Deleting material: {filename} from course {course_id}")
+        
+        rag = get_rag_engine(course_id)
+        
+        if not rag.collection:
+            return jsonify({'error': 'Collection not found'}), 404
+        
+        collection = rag.collection
+        
+        # Find all chunk IDs for this file
+        results = collection.get()
+        ids_to_delete = [
+            chunk_id for chunk_id in results['ids']
+            if chunk_id.startswith(filename + '_')
+        ]
+        
+        if ids_to_delete:
+            collection.delete(ids=ids_to_delete)
+            
+            app.logger.info(f"Deleted {len(ids_to_delete)} chunks for {filename}")
+            
+            return jsonify({
+                'success': True,
+                'deleted_chunks': len(ids_to_delete),
+                'filename': filename
+            })
+        else:
+            return jsonify({'error': 'File not found in database'}), 404
+            
+    except Exception as e:
+        app.logger.error(f"Error deleting material: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Development server
