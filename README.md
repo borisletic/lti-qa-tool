@@ -1,111 +1,32 @@
-# Inteligentni Q&A Agent kao IMS LTI Alat sa OWL Ontologijom
+# LTI Q&A Tool - Quick Start Guide
 
-**Jedinstveni projekat iz predmeta:**
-- Savremene obrazovne tehnologije i standardi
-- Semantički veb
+**Inteligentni Q&A asistent kao IMS LTI alat sa RAG arhitekturom i OWL ontologijom**
 
-**Fakultet tehničkih nauka, Univerzitet u Novom Sadu**  
-**© 2026**
-
----
-
-## 📋 PREGLED PROJEKTA
-
-Ovaj projekat implementira **inteligentnog AI agenta** za pitanja i odgovore koji se integriše u Learning Management Systems (Canvas/Moodle) kao **IMS LTI 1.1 alat**. Sistem koristi **RAG (Retrieval-Augmented Generation)** arhitekturu sa lokalnim AI modelom i obogaćen je **semantičkom OWL ontologijom** za reprezentaciju obrazovnog domena.
-
-### 🎯 Glavne karakteristike
-
-- ✅ **IMS LTI 1.1** - Standardizovana integracija sa Canvas LMS
-- ✅ **RAG arhitektura** - Odgovori bazirani na nastavnim materijalima
-- ✅ **Ollama LLM** - Lokalni AI model (mistral) - **BESPLATNO**
-- ✅ **Sentence Transformers** - Besplatni embeddings za semantic search
-- ✅ **ChromaDB** - Vector database za čuvanje dokumenata
-- ✅ **OWL 2 Ontologija** - 304 RDF triples u Apache Jena Fuseki
-- ✅ **SPARQL upiti** - Napredne semantičke pretrage
-- ✅ **Docker deployment** - Kompletna infrastruktura u kontejnerima
+[![Docker](https://img.shields.io/badge/Docker-Required-blue)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/Python-3.11-green)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 ---
 
-## 🏗️ ARHITEKTURA SISTEMA
+## 📋 PREDUSLOVI
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Canvas LMS                              │
-│                    (LTI Consumer)                            │
-└────────────────────┬────────────────────────────────────────┘
-                     │ LTI 1.1 Launch
-                     ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   LTI Q&A Tool Provider                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐  │
-│  │ Flask App    │→ │ RAG Engine   │→ │ Ollama LLM      │  │
-│  │ (LTI Logic)  │  │ (Retrieval)  │  │ (Generation)    │  │
-│  └──────────────┘  └──────────────┘  └─────────────────┘  │
-│         ↓                  ↓                                │
-│  ┌──────────────┐  ┌──────────────┐                        │
-│  │ Semantic     │  │ Session Mgmt │                        │
-│  │ Layer (RDF)  │  │ (Flask)      │                        │
-│  └──────────────┘  └──────────────┘                        │
-└─────────┬───────────────────┬───────────────────┬──────────┘
-          │                   │                   │
-          ↓                   ↓                   ↓
-    ┌──────────┐      ┌─────────────┐     ┌──────────────┐
-    │ ChromaDB │      │ Apache Jena │     │    Ollama    │
-    │ Vectors  │      │   Fuseki    │     │  mistral     │
-    └──────────┘      │  (SPARQL)   │     └──────────────┘
-                      └─────────────┘
-```
+- **Docker Desktop** (Windows/Mac) ili Docker Engine (Linux)
+- **8GB RAM** minimum
+- **20GB** slobodnog prostora
+- **Git** (opciono)
 
 ---
 
-## 🛠️ TEHNOLOGIJE
+## 🚀 BRZO POKRETANJE (5 koraka)
 
-### Backend
-- **Python 3.11** - Glavna platforma
-- **Flask 3.0** - Web framework
-- **PyLTI1p3 2.0** - LTI 1.3 biblioteka (koristi se za LTI 1.1)
-- **Gunicorn** - Production WSGI server
-
-### AI & Machine Learning
-- **Ollama** - Lokalni LLM server (mistral, 4.4GB)
-- **Sentence Transformers 2.2** - Multilingual embeddings
-- **ChromaDB 0.4** - Vector database
-
-### Semantic Web
-- **RDFLib 7.0** - Python biblioteka za RDF
-- **Apache Jena Fuseki** - SPARQL server
-- **OWL 2 DL** - Web Ontology Language
-
-### Infrastructure
-- **Docker & Docker Compose** - Kontejnerizacija
-- **Canvas LMS** - Learning Management System
-- **PostgreSQL 11** - Canvas database
-- **Redis 7** - Canvas cache
-
----
-
-## 📦 INSTALACIJA I POKRETANJE
-
-### Preduslovi
-
-- **Docker Desktop** ili Docker Engine + Docker Compose
-- Minimalno **8GB RAM**
-- **20GB** slobodnog prostora na disku
-- Windows 10/11, Linux ili macOS
-
-### Korak 1: Priprema projekta
+### KORAK 1: Preuzmi projekat
 
 ```bash
-# Ekstraktuj projekat
+# Raspakuj projekat u željeni folder
 cd lti-qa-tool
-
-# Kreiraj .env fajl (bez OpenAI API key-a - nije potreban!)
-cp .env.example .env
 ```
 
-**NAPOMENA**: Sistem radi **bez OpenAI API key-a** jer koristi lokalni Ollama model.
-
-### Korak 2: Generisanje LTI ključeva
+### KORAK 2: Generiši LTI ključeve
 
 ```bash
 cd lti-tool/configs
@@ -121,53 +42,42 @@ openssl rsa -in private.key -pubout -out public.key
 cd ../..
 ```
 
-### Korak 3: Pokretanje Docker stack-a
+### KORAK 3: Pokreni Docker stack
 
 ```bash
 cd docker
 docker-compose up -d
 ```
 
-Ovo će pokrenuti:
-- **Canvas LMS** - http://localhost:3000
-- **LTI Q&A Tool** - http://localhost:5000
-- **ChromaDB** - http://localhost:8001
-- **Apache Jena Fuseki** - http://localhost:3030
-- **Ollama** - http://localhost:11434
+**⏱️ Čekanje:**
+- Prvi put: **10-15 minuta** (download Ollama model + Canvas inicijalizacija)
+- Svaki sledeći put: **30 sekundi**
 
-**VAŽNO**: Canvas inicijalizacija traje **5-10 minuta**. Pratite logove:
-
+Prati progress:
 ```bash
-docker-compose logs -f canvas
+docker-compose logs -f lti_tool
 ```
 
-### Korak 4: Konfiguracija Canvas LMS-a
+### KORAK 4: Pristup sistemima
 
-#### 4.1 Pristup Canvas-u
+| Servis | URL | Kredensiali |
+|--------|-----|-------------|
+| **Canvas LMS** | http://localhost:3000 | admin@example.com / canvasadmin123 |
+| **LTI Q&A Tool** | http://localhost:5000 | (access via Canvas) |
+| **Fuseki SPARQL** | http://localhost:3030 | (no auth) |
+| **ChromaDB** | http://localhost:8001 | (no auth) |
 
-- **URL**: http://localhost:3000
-- **Email**: admin@example.com
-- **Password**: canvasadmin123
+### KORAK 5: Konfiguriši LTI u Canvas-u
 
-#### 4.2 Kreiranje Developer Key (preko Rails console)
-
-Canvas stable image ima bugove u UI-u, pa koristimo Rails console:
+#### 5.1 Kreiraj Developer Key (Rails console)
 
 ```bash
 docker-compose exec canvas bundle exec rails console
 ```
 
-U Rails konzoli izvršite:
+U Rails konzoli, izvršite:
 
 ```ruby
-# Generiši RSA public key u JSON formatu
-require 'openssl'
-require 'base64'
-
-private_key_path = '/path/to/lti-tool/configs/private.key'
-# NAPOMENA: Zamijenite sa stvarnim path-om ili kopirajte key sadržaj
-
-# Ili jednostavno kreirajte key sa hardcoded JWK
 key = DeveloperKey.create!(
   name: 'Q&A Inteligentni Asistent',
   email: 'admin@example.com',
@@ -186,38 +96,39 @@ key = DeveloperKey.create!(
 puts "✓ Developer Key kreiran!"
 puts "Client ID: #{key.global_id}"
 
-# Enable key
 key.update!(workflow_state: 'active')
+
 account = Account.find_by(name: 'FTN Test Institution') || Account.default
 key.developer_key_account_bindings.create!(account: account, workflow_state: 'on')
+
+puts "✓ Key aktiviran!"
 
 exit
 ```
 
-**Kopirajte Client ID** (npr. `10000000000006`)
+**⚠️ VAŽNO: KOPIRAJ Client ID!** (npr. `10000000000006`)
 
-#### 4.3 Dodavanje Client ID u konfiguraciju
+#### 5.2 Ažuriraj LTI config
 
-Otvorite `lti-tool/configs/lti-config.json` i zamijenite:
+Otvori `lti-tool/configs/lti-config.json` i zameni `client_id`:
 
 ```json
 {
   "http://localhost:3000": {
-    "client_id": "VAŠE_CLIENT_ID_OVDE",
+    "client_id": "TVOJ_CLIENT_ID_OVDE",
+    "auth_login_url": "http://localhost:3000/api/lti/authorize_redirect",
+    "auth_token_url": "http://localhost:3000/login/oauth2/token",
     ...
   }
 }
 ```
 
-Restartujte LTI tool:
-
+**Restart LTI tool:**
 ```bash
 docker-compose restart lti_tool
 ```
 
-#### 4.4 Kreiranje kursa i dodavanje External Tool-a
-
-Preko Rails console-a:
+#### 5.3 Kreiraj kurs i dodaj tool (Rails console)
 
 ```bash
 docker-compose exec canvas bundle exec rails console
@@ -239,7 +150,7 @@ puts "✓ Kurs kreiran! ID: #{course.id}"
 tool = ContextExternalTool.create!(
   context: course,
   name: 'Q&A Asistent',
-  consumer_key: 'VAŠE_CLIENT_ID',  # Zamijenite
+  consumer_key: 'TVOJ_CLIENT_ID',  # Zameni sa pravim Client ID
   shared_secret: 'not_used',
   url: 'http://host.docker.internal:5000/launch',
   workflow_state: 'public',
@@ -252,24 +163,12 @@ tool = ContextExternalTool.create!(
 puts "✓ External Tool dodat!"
 puts "Kurs URL: http://localhost:3000/courses/#{course.id}"
 
-exit
-```
-
-#### 4.5 Enrollment admina u kurs
-
-```ruby
-docker-compose exec canvas bundle exec rails console
-```
-
-```ruby
+# Enrolluj admina
 cc = CommunicationChannel.find_by(path: 'admin@example.com')
 admin = cc.user if cc
-course = Course.find(1)  # Ili ID vašeg kursa
-
 if admin
-  enrollment = course.enroll_user(admin, 'TeacherEnrollment', {
-    enrollment_state: 'active',
-    allow_multiple_enrollments: true
+  course.enroll_user(admin, 'TeacherEnrollment', {
+    enrollment_state: 'active'
   })
   puts "✓ Admin enrollovan!"
 end
@@ -277,318 +176,287 @@ end
 exit
 ```
 
-### Korak 5: Instalacija Ollama modela
+---
+
+## 📤 UPLOAD MATERIJALA
+
+### Metod 1: Kroz UI (najlakše)
+
+1. Login u Canvas: http://localhost:3000
+2. Otvori kurs: **Savremene obrazovne tehnologije**
+3. Klikni: **Q&A Asistent** u navigaciji kursa
+4. Vidi **"📤 Upload nastavnih materijala"** widget
+5. **Drag & drop** ili klikni za upload fajlova
+6. Podržani formati: **TXT, MD, PDF, DOCX** (max 10MB)
+7. Sačekaj 30-60s za procesiranje
+
+### Metod 2: Direktno u Docker (za batch upload)
 
 ```bash
-# Sačekajte da Ollama servis bude aktivan
-docker-compose ps ollama
+# Kopiraj materijale u container
+docker cp materijali/ lti-qa-tool:/tmp/course-materials
 
-# Pull model (1.3GB download)
-docker-compose exec ollama ollama pull llama3.2:1b
+# Upload skripta
+docker-compose exec lti_tool python3 << 'EOF'
+import sys
+sys.path.insert(0, '/app')
+from pathlib import Path
+from rag_engine import get_rag_engine
 
-# Verifikujte
-docker-compose exec ollama ollama list
-# Trebalo bi: llama3.2:1b    baf6a787fdff    1.3 GB
+rag = get_rag_engine('1')  # Course ID
+materials_path = Path('/tmp/course-materials')
+
+for file in materials_path.glob('*.txt'):
+    with open(file, 'r', encoding='utf-8') as f:
+        text = f.read()
+    rag.add_document(text, {'filename': file.name, 'course_id': '1'})
+    print(f"✓ {file.name}")
+
+print(f"\n✅ Upload završen!")
+print(f"Statistika: {rag.get_collection_stats()}")
+EOF
 ```
 
-### Korak 6: Upload ontologije u Fuseki
+---
 
-Kreirajte skriptu:
+## 📚 UPLOAD ONTOLOGIJE U FUSEKI
 
 ```bash
-cat > upload_ontology.py << 'EOF'
+docker-compose exec lti_tool python3 << 'EOF'
 from rdflib import Graph
 import requests
 
+print('📚 Učitavanje ontologije...')
 g = Graph()
 g.parse('/app/ontology/lms-tools.ttl', format='turtle')
-print(f'Loaded {len(g)} triples')
+print(f'   ✓ Učitano {len(g)} triples')
 
+print('\n📤 Upload u Fuseki...')
 triples = list(g)
 chunk_size = 50
 
 for i in range(0, len(triples), chunk_size):
     chunk = triples[i:i+chunk_size]
     insert_triples = [f'{s.n3()} {p.n3()} {o.n3()} .' for s, p, o in chunk]
-    insert_query = 'INSERT DATA { ' + ' '.join(insert_triples) + ' }'
+    query = 'INSERT DATA { ' + ' '.join(insert_triples) + ' }'
     
     resp = requests.post(
         'http://fuseki:3030/lms-tools/update',
-        data={'update': insert_query},
+        data={'update': query},
         headers={'Content-Type': 'application/x-www-form-urlencoded'}
     )
     
     if resp.status_code < 400:
-        print(f'✓ Chunk {i//chunk_size + 1}')
+        print(f'   ✓ Chunk {i//chunk_size + 1}/{len(triples)//chunk_size + 1}')
+    else:
+        print(f'   ✗ Error: {resp.status_code}')
+        break
 
-print(f'\n✅ Upload complete!')
+# Verifikuj
+query_resp = requests.post(
+    'http://fuseki:3030/lms-tools/query',
+    data={'query': 'SELECT (COUNT(*) as ?c) WHERE {?s ?p ?o}'}
+)
+count = query_resp.json()['results']['bindings'][0]['c']['value']
+
+print(f'\n✅ Upload complete: {count} triples u Fuseki bazi')
 EOF
-
-# Upload
-docker cp upload_ontology.py lti-qa-tool:/tmp/
-docker-compose exec lti_tool python3 /tmp/upload_ontology.py
 ```
 
-### Korak 7: Upload nastavnih materijala
-
-```bash
-# Kopirajte materijal u container
-docker-compose exec lti_tool python3 -c "
-from rag_engine import get_rag_engine
-
-rag = get_rag_engine('1')  # Course ID = 1
-text = '''
-IMS Learning Tools Interoperability (LTI) je standard za integraciju 
-eksternih obrazovnih alata u Learning Management Systems (LMS) kao što 
-su Canvas i Moodle. LTI omogućava bezbednu integraciju eksternih alata 
-preko OAuth autentifikacije. Canvas koristi LTI 1.1 verziju, dok noviji 
-LMS-ovi koriste LTI 1.3 sa OAuth 2.0 i OpenID Connect.
-'''
-
-success = rag.add_document(text, {'filename': 'lti-standard.txt'})
-print(f'Upload status: {success}')
-print(f'Collection stats: {rag.get_collection_stats()}')
-"
-```
+**Verifikuj**: http://localhost:3030
 
 ---
 
-## 🎓 KORIŠĆENJE SISTEMA
+## 🧪 TESTIRANJE
 
-### Za studente
-
-1. Prijavite se u Canvas (http://localhost:3000)
-2. Otvorite kurs "Savremene obrazovne tehnologije"
-3. Kliknite na **"Q&A Asistent"** u navigaciji kursa
-4. Unesite pitanje o nastavnom materijalu
-5. AI će generisati odgovor baziran na dokumentima
-
-**Primer pitanja:**
-- "Šta je IMS LTI standard?"
-- "Kako funkcioniše OAuth autentifikacija u LTI?"
-- "Koja je razlika između LTI 1.1 i LTI 1.3?"
-
-### Za instruktore
-
-Instruktori vide dodatno:
-- **Statistiku kursa** - broj pitanja, prosečno poverenje
-- Mogućnost upload-a novih materijala
-
----
-
-## 🧪 TESTIRANJE SISTEMA
-
-### Test 1: LTI Launch
+### Test 1: Health check
 
 ```bash
-# Provjeri LTI tool health
 curl http://localhost:5000/health
-
-# Očekivano:
-# {"status":"healthy","service":"LTI Q&A Tool"}
 ```
 
-### Test 2: RAG Q&A
+**Očekivano:**
+```json
+{"status":"healthy","service":"LTI Q&A Tool","timestamp":"2026-02-07T00:00:00.000000"}
+```
 
-Otvorite Canvas → Q&A Asistent i postavite pitanje.
+### Test 2: Q&A funkcionalnost
 
-Očekivani output:
-- Odgovor od AI-a baziran na materijalu
-- Confidence score (55-90%)
-- Izvori (chunk-ovi iz dokumenata)
+1. Otvori Canvas → Q&A Asistent
+2. Postavi pitanje: **"Šta je IMS LTI standard?"**
+3. **Očekivani odgovor**: Detaljan opis LTI-ja sa confidence 65-85%
 
-### Test 3: SPARQL Upiti
+**Primer output:**
+```
+IMS Learning Tools Interoperability (LTI) je standard koji omogućava 
+integraciju eksternih obrazovnih aplikacija u Learning Management Systems. 
+LTI koristi Provider-Consumer model sa OAuth autentifikacijom...
 
-```bash
-docker-compose exec lti_tool python3 << 'EOF'
-import requests
+Poverenje: 75%
+📖 Izvori: 3 chunk-a iz materijala
+```
 
-query = '''
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
+### Test 3: Pregled materijala
+
+U Q&A Asistent UI-ju, klikni: **📚 Pregled materijala u bazi**
+
+**Očekivano:**
+```
+📊 Statistika
+Ukupno fajlova: 3
+Ukupno chunks: 11
+
+✓ canvas-lms-pregled.txt (3 chunks)
+✓ lti-detaljan-vodic.txt (4 chunks)
+✓ rag-arhitektura.txt (4 chunks)
+```
+
+### Test 4: SPARQL upiti
+
+Fuseki web interface: http://localhost:3030
+
+Klikni: **lms-tools** → **Query**
+
+```sparql
+PREFIX lms: <http://example.org/lms-tools#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?class ?label WHERE {
   ?class rdf:type owl:Class .
-  OPTIONAL { ?class rdfs:label ?label }
+  OPTIONAL { ?class rdfs:label ?label FILTER(lang(?label) = "en") }
 }
+ORDER BY ?label
 LIMIT 10
-'''
-
-resp = requests.post('http://fuseki:3030/lms-tools/query', data={'query': query})
-print('OWL Klase:')
-for b in resp.json()['results']['bindings']:
-    print(f"  - {b.get('label', {}).get('value', 'N/A')}")
-EOF
 ```
+
+**Očekivano**: Lista OWL klasa (LMSTool, QATool, Course, Student, ...)
 
 ---
 
-## 📊 KOMPONENTE SISTEMA
-
-### 1. Canvas LMS
-- **Port**: 3000
-- **Database**: PostgreSQL 11
-- **Cache**: Redis 7
-- **Initial setup**: db:migrate + db:seed
-
-### 2. LTI Q&A Tool
-- **Port**: 5000
-- **Framework**: Flask 3.0 + Gunicorn
-- **LTI Version**: 1.1 (Canvas stable limitation)
-- **Session**: Flask session (iframe cookies issue resolved)
-
-### 3. RAG Engine
-- **Embeddings**: Sentence Transformers (paraphrase-multilingual-MiniLM-L12-v2)
-- **Vector DB**: ChromaDB (PersistentClient)
-- **LLM**: Ollama llama3.2:1b
-- **Chunk size**: 500 characters, 50 overlap
-
-### 4. Semantic Layer
-- **Ontology**: OWL 2 DL (304 triples)
-- **Storage**: Apache Jena Fuseki
-- **Endpoint**: http://localhost:3030/lms-tools/query
-- **Features**: RDF logging of Q&A sessions
-
-### 5. ChromaDB
-- **Port**: 8001
-- **Collections**: Per-course isolation (e.g., `course_1`)
-- **Storage**: `/app/data/chroma_db`
-
-### 6. Ollama
-- **Port**: 11434
-- **Model**: llama3.2:1b (1.3GB)
-- **API**: `/api/generate` endpoint
-
----
-
-## 🎯 DEMONSTRACIJA ZA PROFESORA
-
-### Savremene obrazovne tehnologije
-
-**1. IMS LTI 1.1 Integracija**
-- Launch flow preko OAuth
-- Session management
-- Course context prenesen u tool
-
-**2. RAG arhitektura**
-```
-User Question → Embedding → Vector Search (ChromaDB) 
-             → Top-K Chunks → LLM Prompt → Generated Answer
-```
-
-**3. Lokalni AI bez external API-ja**
-- Ollama LLM umjesto OpenAI
-- Sentence Transformers umjesto OpenAI embeddings
-- **100% besplatno, offline-capable**
-
-### Semantički veb
-
-**1. OWL Ontologija** (`ontology/lms-tools.ttl`)
-
-Primjeri klasa:
-```turtle
-:LMSTool rdf:type owl:Class ;
-    rdfs:label "LMS Tool"@en ;
-    rdfs:comment "External application integrated into LMS"@en .
-
-:QATool rdf:type owl:Class ;
-    rdfs:subClassOf :LMSTool .
-```
-
-**2. IMS LTI + OWL Kombinacija**
-
-```turtle
-:LTI_1_3 rdf:type :LTIStandard ;
-    :versionNumber "1.3" ;
-    :usesAuthentication "OAuth 2.0 + OpenID Connect" .
-
-:Canvas rdf:type :LTIConsumer ;
-    :implementsStandard :LTI_1_3 .
-```
-
-**3. SPARQL Upiti**
-
-Svi LTI standardi:
-```sparql
-PREFIX lms: <http://example.org/lms-tools#>
-SELECT ?standard ?version ?auth WHERE {
-  ?standard rdf:type lms:LTIStandard .
-  ?standard lms:versionNumber ?version .
-  ?standard lms:usesAuthentication ?auth .
-}
-```
-
-Rezultat:
-- LTI 1.1: OAuth 1.0
-- LTI 1.3: OAuth 2.0 + OpenID Connect
-
----
-
-## 🐛 TROUBLESHOOTING
+## 🛠️ TROUBLESHOOTING
 
 ### Canvas se ne pokreće
 
 ```bash
-# Logovi
-docker-compose logs canvas
+# Proveri logove
+docker-compose logs canvas --tail=50
 
-# Reset
-docker-compose down -v
+# Restart
+docker-compose restart canvas
+
+# Ako i dalje ne radi, full reset:
+docker-compose down
 docker-compose up -d
 ```
 
-### LTI tool pada
+### LTI tool ne radi
 
 ```bash
-# Logovi
-docker-compose logs lti_tool
+# Proveri logove
+docker-compose logs lti_tool --tail=50
 
-# Rebuild
-docker-compose build lti_tool
-docker-compose up -d lti_tool
-```
-
-### Ollama model nije skinut
-
-```bash
-docker-compose exec ollama ollama pull llama3.2:1b
-```
-
-### ChromaDB connection error
-
-```bash
 # Restart
-docker-compose restart chroma
+docker-compose restart lti_tool
 
-# Provjeri
-docker-compose ps chroma
+# Proveri health
+curl http://localhost:5000/health
 ```
 
-### Fuseki autentifikacija
+### "ChromaDB connection error"
 
-Provjerite `docker-compose.yml` - treba `--update` flag u command-u.
+**Ovo je normalno!** To je samo warning - sistem koristi PersistentClient umesto HttpClient. Ne utiče na funkcionalnost.
+
+### "Worker timeout" greška
+
+Povećaj timeout u `lti-tool/Dockerfile`:
+
+```dockerfile
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "600", "--graceful-timeout", "600", "app:app"]
+```
+
+Rebuild:
+```bash
+docker-compose build lti_tool
+docker-compose up -d
+```
+
+### Upload traje predugo
+
+**Normalno za velike PDF-ove!** Očekivano vreme:
+- TXT 10KB: 5s
+- PDF 1MB: 30-60s
+- DOCX 500KB: 20-40s
+
+Ako upload fail-uje, proveri:
+```bash
+docker-compose logs lti_tool --tail=100
+```
+
+### Nema odgovora na pitanja
+
+**Debug checklist:**
+1. Proveri da su materijali upload-ovani: **📚 Pregled materijala**
+2. Proveri Ollama: `docker-compose ps ollama`
+3. Proveri ChromaDB: `docker-compose ps chroma`
+4. Proveri logove: `docker-compose logs lti_tool --tail=50`
 
 ---
 
-## 📈 PERFORMANSE
+## 📊 ARHITEKTURA
 
-- **LTI Launch**: < 500ms
-- **Q&A Response**: 3-8s (zavisi od Ollama inference speed)
-- **Vector search**: < 200ms
-- **SPARQL upiti**: < 100ms
-- **Embedding generation**: ~1s za 500 char chunk
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Canvas LMS                              │
+│                    (LTI Consumer)                            │
+└────────────────────┬────────────────────────────────────────┘
+                     │ LTI 1.1 Launch
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│                   LTI Q&A Tool Provider                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐   │
+│  │ Flask App    │→ │ RAG Engine   │→ │ Ollama LLM      │   │
+│  │ (LTI Logic)  │  │ (Retrieval)  │  │ (Generation)    │   │
+│  └──────────────┘  └──────────────┘  └─────────────────┘   │
+│         ↓                  ↓                                 │
+│  ┌──────────────┐  ┌──────────────┐                         │
+│  │ Semantic     │  │ Session Mgmt │                         │
+│  │ Layer (RDF)  │  │ (Flask)      │                         │
+│  └──────────────┘  └──────────────┘                         │
+└─────────┬───────────────────┬───────────────────┬───────────┘
+          │                   │                   │
+          ↓                   ↓                   ↓
+    ┌──────────┐      ┌─────────────┐     ┌──────────────┐
+    │ ChromaDB │      │ Apache Jena │     │    Ollama    │
+    │ Vectors  │      │   Fuseki    │     │   Mistral    │
+    └──────────┘      │  (SPARQL)   │     └──────────────┘
+                      └─────────────┘
+```
+
+### Tech Stack
+
+| Komponenta | Tehnologija | Verzija |
+|------------|-------------|---------|
+| **Web Framework** | Flask | 3.0 |
+| **LLM** | Ollama Mistral | latest (4.4GB) |
+| **Embeddings** | Sentence Transformers | 2.2 (multilingual) |
+| **Vector DB** | ChromaDB | 0.4.22 |
+| **SPARQL Server** | Apache Jena Fuseki | latest |
+| **LMS** | Canvas LMS | stable |
+| **Orchestration** | Docker Compose | v2 |
+| **Database** | PostgreSQL | 11 |
+| **Cache** | Redis | 7 |
 
 ---
 
-## 📝 STRUKTURA PROJEKTA
+## 📁 STRUKTURA PROJEKTA
 
 ```
 lti-qa-tool/
 ├── docker/
 │   ├── docker-compose.yml          # Orchestration
-│   ├── canvas-config/              # Canvas configuration files
-│   └── canvas-patches/             # Migration monkey-patches
+│   ├── canvas-config/              # Canvas configuration
+│   └── canvas-patches/             # Migration fixes
 ├── lti-tool/
 │   ├── app.py                      # Flask application
 │   ├── rag_engine.py               # RAG implementation
@@ -602,7 +470,7 @@ lti-qa-tool/
 │   └── templates/
 │       └── qa_interface.html      # Web UI
 ├── ontology/
-│   └── lms-tools.ttl              # OWL ontology
+│   └── lms-tools.ttl              # OWL ontology (304 triples)
 ├── scripts/
 │   ├── upload_materials.py        # Upload course materials
 │   └── init_ontology.py           # Initialize ontology
@@ -611,43 +479,137 @@ lti-qa-tool/
 
 ---
 
-## 🔑 KEY LEARNINGS
+## 🗑️ ČIŠĆENJE
 
-### LTI Implementation
-- Canvas stable image supports **LTI 1.1 only**, not 1.3
-- Session management in iframes requires workarounds (localStorage)
-- Rails console is more reliable than Canvas UI for configuration
+### Zaustavi sve servise
 
-### RAG System
-- Local models (Ollama) work great for educational Q&A
-- Sentence Transformers provide high-quality multilingual embeddings
-- ChromaDB can work with PersistentClient (file-based) when HttpClient fails
+```bash
+docker-compose down
+```
 
-### Semantic Web
-- Fuseki requires `--update` flag for write access without auth
-- Large literal strings in RDF need chunked uploads
-- SPARQL queries work even with 401 errors on POST /data endpoint
+### Obriši SAMO materijale (ne Canvas)
+
+```bash
+docker volume rm docker_chroma_data
+```
+
+### Obriši SVE volume-ove (full reset)
+
+```bash
+docker-compose down -v
+```
+
+**⚠️ UPOZORENJE**: Ovo briše:
+- Canvas podatke (kurseve, korisnike)
+- Upload-ovane materijale
+- Ontologiju iz Fuseki-ja
+- Ollama model (2GB re-download!)
 
 ---
 
-## 📚 REFERENCE
+## 📝 NAPOMENE
 
-1. IMS Global Learning Consortium. (2023). *Learning Tools Interoperability Core Specification*. https://www.imsglobal.org/spec/lti/v1p3/
-2. W3C. (2012). *OWL 2 Web Ontology Language Document Overview*. https://www.w3.org/TR/owl2-overview/
-3. Lewis, P., et al. (2020). *Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*. NeurIPS 2020.
-4. Ollama. (2024). *Get up and running with large language models, locally*. https://ollama.ai
-5. Apache Jena. *Fuseki: SPARQL Server*. https://jena.apache.org/documentation/fuseki2/
+### Performanse
+
+- **Prvi start**: 10-15 minuta (download model-a + Canvas setup)
+- **Embedding model**: 2GB, kešira se u Docker volume-u
+- **Ollama model**: 4.4GB, download-uje se automatski
+- **Canvas inicijalizacija**: 5-10 minuta
+- **Upload timeout**: 10 minuta za velike PDF-ove
+
+### Persistence
+
+- **ChromaDB**: Materijali se čuvaju zauvek (dok ne obrišeš volume)
+- **Fuseki**: Ontologija persists u `fuseki_data` volume-u
+- **Canvas**: Kursevi i korisnici u `postgres_data` volume-u
+- **Ollama**: Model u `ollama_data` volume-u
+- **Embedding model**: U `huggingface_cache` volume-u
+
+### Dupli upload
+
+ChromaDB automatski detektuje duplikate po ID-u (`filename_chunkNumber`) i ignoriše ih - NEĆE kreirati duplikate!
 
 ---
 
-## 👥 AUTOR
+## 🎯 RAG PIPELINE
 
-**Student**: Boris  
-**Predmeti**:
+```
+User Question
+    ↓
+Sentence Transformers (embedding)
+    ↓
+ChromaDB (vector search, top-8 chunks)
+    ↓
+Context Assembly (800 chars/chunk)
+    ↓
+Ollama Mistral (generation, temp=0.3)
+    ↓
+AI Answer + Confidence Score
+```
+
+**Confidence scoring:**
+- Distance ≤ 0.35 → 95% (perfektan)
+- Distance ≤ 0.45 → 85% (odličan)
+- Distance ≤ 0.55 → 75% (vrlo dobar)
+- Distance ≤ 0.65 → 65% (dobar)
+- Distance ≤ 0.75 → 50% (solidan)
+- Distance > 0.75 → 35% (prihvatljiv)
+
+---
+
+## ✅ FINALNI CHECKLIST
+
+Pre prezentacije, proveri:
+
+- [ ] Docker Desktop pokrenut
+- [ ] OpenSSL ključevi generisani (`private.key`, `public.key`)
+- [ ] `docker-compose up -d` završen bez grešaka
+- [ ] Canvas pristupan na http://localhost:3000
+- [ ] Developer Key kreiran u Rails console-u
+- [ ] Client ID ubačen u `lti-config.json`
+- [ ] LTI tool restartovan nakon config izmene
+- [ ] Kurs "Savremene obrazovne tehnologije" kreiran
+- [ ] External Tool "Q&A Asistent" dodat u kurs
+- [ ] Admin enrollovan u kurs kao Instructor
+- [ ] Test materijal upload-ovan (TXT, PDF ili DOCX)
+- [ ] Q&A test pitanje vraća odgovor sa confidence > 60%
+- [ ] Ontologija upload-ovana u Fuseki (304 triples)
+- [ ] SPARQL test upit radi na http://localhost:3030
+- [ ] "📚 Pregled materijala" prikazuje fajlove
+
+---
+
+## 🎓 DEMONSTRACIJA ZA PROFESORA
+
+### Za predmet: Savremene obrazovne tehnologije i standardi
+
+**Ključne tačke:**
+1. ✅ **IMS LTI 1.1 integracija** - OAuth, Launch flow, Session management
+2. ✅ **Canvas LMS deployment** - Docker, PostgreSQL, Redis
+3. ✅ **RAG arhitektura** - Retrieval → Generation pipeline
+4. ✅ **Lokalni AI** - Ollama (bez OpenAI API), besplatno, offline-capable
+5. ✅ **File upload** - Drag & drop, TXT/MD/PDF/DOCX support
+
+### Za predmet: Semantički veb
+
+**Ključne tačke:**
+1. ✅ **OWL 2 DL ontologija** - 304 triples, 17 klasa, 37 properties
+2. ✅ **RDF reprezentacija** - Q&A sesije loguju se u RDF format
+3. ✅ **Apache Jena Fuseki** - SPARQL endpoint, query interface
+4. ✅ **Semantička integracija** - LTI + LMS domain u OWL-u
+5. ✅ **SPARQL upiti** - Pretraga klasa, properties, instanci
+
+---
+
+## 📞 KONTAKT
+
+**Projekat izrađen za:**
 - Savremene obrazovne tehnologije i standardi
 - Semantički veb
 
-**Institucija**: Fakultet tehničkih nauka, Univerzitet u Novom Sadu
+**Institucija:** Fakultet tehničkih nauka, Univerzitet u Novom Sadu  
+**Datum:** Februar 2026  
+**Verzija:** 1.0
 
 ---
 
@@ -657,13 +619,11 @@ MIT License - Projekat izrađen za obrazovne svrhe.
 
 ---
 
-## ✅ ZAKLJUČAK
+**🎉 Projekat je spreman za prezentaciju!**
 
-Ovaj projekat demonstrira:
-- ✅ **Kompletnu LTI integraciju** sa Canvas LMS-om
-- ✅ **Funkcionalan RAG sistem** sa lokalnim AI modelom
-- ✅ **Semantičku ontologiju** u OWL-u sa SPARQL upitima
-- ✅ **Production-ready deployment** sa Docker Compose
-- ✅ **Besplatno rješenje** bez eksternih API-ja
+Za dodatna pitanja ili probleme, proveri logove:
+```bash
+docker-compose logs <servis_ime> --tail=100
+```
 
-**Status**: 🎉 **POTPUNO FUNKCIONALAN** 🎉
+Gde `<servis_ime>` može biti: `canvas`, `lti_tool`, `chroma`, `fuseki`, `ollama`
