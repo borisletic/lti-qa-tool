@@ -8,7 +8,7 @@
 
 ---
 
-## 📋 PREDUSLOVI
+## PREDUSLOVI
 
 - **Docker Desktop** (Windows/Mac) ili Docker Engine (Linux)
 - **8GB RAM** minimum
@@ -17,7 +17,7 @@
 
 ---
 
-## 🚀 BRZO POKRETANJE (5 koraka)
+## BRZO POKRETANJE (5 koraka)
 
 ### KORAK 1: Preuzmi projekat
 
@@ -49,7 +49,7 @@ cd docker
 docker-compose up -d
 ```
 
-**⏱️ Čekanje:**
+**Čekanje:**
 - Prvi put: **10-15 minuta** (download Ollama model + Canvas inicijalizacija)
 - Svaki sledeći put: **30 sekundi**
 
@@ -106,7 +106,7 @@ puts "✓ Key aktiviran!"
 exit
 ```
 
-**⚠️ VAŽNO: KOPIRAJ Client ID!** (npr. `10000000000006`)
+**VAŽNO: KOPIRAJ Client ID!** (npr. `10000000000006`)
 
 #### 5.2 Ažuriraj LTI config
 
@@ -178,14 +178,14 @@ exit
 
 ---
 
-## 📤 UPLOAD MATERIJALA
+## UPLOAD MATERIJALA
 
 ### Metod 1: Kroz UI (najlakše)
 
 1. Login u Canvas: http://localhost:3000
 2. Otvori kurs: **Savremene obrazovne tehnologije**
 3. Klikni: **Q&A Asistent** u navigaciji kursa
-4. Vidi **"📤 Upload nastavnih materijala"** widget
+4. Vidi **Upload nastavnih materijala"** widget
 5. **Drag & drop** ili klikni za upload fajlova
 6. Podržani formati: **TXT, MD, PDF, DOCX** (max 10MB)
 7. Sačekaj 30-60s za procesiranje
@@ -212,14 +212,14 @@ for file in materials_path.glob('*.txt'):
     rag.add_document(text, {'filename': file.name, 'course_id': '1'})
     print(f"✓ {file.name}")
 
-print(f"\n✅ Upload završen!")
+print(f"\n Upload završen!")
 print(f"Statistika: {rag.get_collection_stats()}")
 EOF
 ```
 
 ---
 
-## 📚 UPLOAD ONTOLOGIJE U FUSEKI
+## UPLOAD ONTOLOGIJE U FUSEKI
 
 ```bash
 docker-compose exec lti_tool python3 << 'EOF'
@@ -231,7 +231,7 @@ g = Graph()
 g.parse('/app/ontology/lms-tools.ttl', format='turtle')
 print(f'   ✓ Učitano {len(g)} triples')
 
-print('\n📤 Upload u Fuseki...')
+print('\n Upload u Fuseki...')
 triples = list(g)
 chunk_size = 50
 
@@ -259,7 +259,7 @@ query_resp = requests.post(
 )
 count = query_resp.json()['results']['bindings'][0]['c']['value']
 
-print(f'\n✅ Upload complete: {count} triples u Fuseki bazi')
+print(f'\n Upload complete: {count} triples u Fuseki bazi')
 EOF
 ```
 
@@ -267,7 +267,7 @@ EOF
 
 ---
 
-## 🧪 TESTIRANJE
+## TESTIRANJE
 
 ### Test 1: Health check
 
@@ -293,16 +293,16 @@ integraciju eksternih obrazovnih aplikacija u Learning Management Systems.
 LTI koristi Provider-Consumer model sa OAuth autentifikacijom...
 
 Poverenje: 75%
-📖 Izvori: 3 chunk-a iz materijala
+Izvori: 3 chunk-a iz materijala
 ```
 
 ### Test 3: Pregled materijala
 
-U Q&A Asistent UI-ju, klikni: **📚 Pregled materijala u bazi**
+U Q&A Asistent UI-ju, klikni: **Pregled materijala u bazi**
 
 **Očekivano:**
 ```
-📊 Statistika
+Statistika
 Ukupno fajlova: 3
 Ukupno chunks: 11
 
@@ -334,7 +334,7 @@ LIMIT 10
 
 ---
 
-## 🛠️ TROUBLESHOOTING
+## TROUBLESHOOTING
 
 ### Canvas se ne pokreće
 
@@ -403,7 +403,7 @@ docker-compose logs lti_tool --tail=100
 
 ---
 
-## 📊 ARHITEKTURA
+## ARHITEKTURA
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -449,7 +449,7 @@ docker-compose logs lti_tool --tail=100
 
 ---
 
-## 📁 STRUKTURA PROJEKTA
+## STRUKTURA PROJEKTA
 
 ```
 lti-qa-tool/
@@ -479,7 +479,7 @@ lti-qa-tool/
 
 ---
 
-## 🗑️ ČIŠĆENJE
+## ČIŠĆENJE
 
 ### Zaustavi sve servise
 
@@ -499,7 +499,7 @@ docker volume rm docker_chroma_data
 docker-compose down -v
 ```
 
-**⚠️ UPOZORENJE**: Ovo briše:
+**UPOZORENJE**: Ovo briše:
 - Canvas podatke (kurseve, korisnike)
 - Upload-ovane materijale
 - Ontologiju iz Fuseki-ja
@@ -507,7 +507,7 @@ docker-compose down -v
 
 ---
 
-## 📝 NAPOMENE
+## NAPOMENE
 
 ### Performanse
 
@@ -531,7 +531,7 @@ ChromaDB automatski detektuje duplikate po ID-u (`filename_chunkNumber`) i ignor
 
 ---
 
-## 🎯 RAG PIPELINE
+## RAG PIPELINE
 
 ```
 User Question
@@ -557,7 +557,7 @@ AI Answer + Confidence Score
 
 ---
 
-## ✅ FINALNI CHECKLIST
+## FINALNI CHECKLIST
 
 Pre prezentacije, proveri:
 
@@ -579,51 +579,20 @@ Pre prezentacije, proveri:
 
 ---
 
-## 🎓 DEMONSTRACIJA ZA PROFESORA
-
 ### Za predmet: Savremene obrazovne tehnologije i standardi
 
 **Ključne tačke:**
-1. ✅ **IMS LTI 1.1 integracija** - OAuth, Launch flow, Session management
-2. ✅ **Canvas LMS deployment** - Docker, PostgreSQL, Redis
-3. ✅ **RAG arhitektura** - Retrieval → Generation pipeline
-4. ✅ **Lokalni AI** - Ollama (bez OpenAI API), besplatno, offline-capable
-5. ✅ **File upload** - Drag & drop, TXT/MD/PDF/DOCX support
+1. **IMS LTI 1.1 integracija** - OAuth, Launch flow, Session management
+2. **Canvas LMS deployment** - Docker, PostgreSQL, Redis
+3. **RAG arhitektura** - Retrieval → Generation pipeline
+4. **Lokalni AI** - Ollama (bez OpenAI API), besplatno, offline-capable
+5. **File upload** - Drag & drop, TXT/MD/PDF/DOCX support
 
 ### Za predmet: Semantički veb
 
 **Ključne tačke:**
-1. ✅ **OWL 2 DL ontologija** - 304 triples, 17 klasa, 37 properties
-2. ✅ **RDF reprezentacija** - Q&A sesije loguju se u RDF format
-3. ✅ **Apache Jena Fuseki** - SPARQL endpoint, query interface
-4. ✅ **Semantička integracija** - LTI + LMS domain u OWL-u
-5. ✅ **SPARQL upiti** - Pretraga klasa, properties, instanci
-
----
-
-## 📞 KONTAKT
-
-**Projekat izrađen za:**
-- Savremene obrazovne tehnologije i standardi
-- Semantički veb
-
-**Institucija:** Fakultet tehničkih nauka, Univerzitet u Novom Sadu  
-**Datum:** Februar 2026  
-**Verzija:** 1.0
-
----
-
-## 📄 LICENCA
-
-MIT License - Projekat izrađen za obrazovne svrhe.
-
----
-
-**🎉 Projekat je spreman za prezentaciju!**
-
-Za dodatna pitanja ili probleme, proveri logove:
-```bash
-docker-compose logs <servis_ime> --tail=100
-```
-
-Gde `<servis_ime>` može biti: `canvas`, `lti_tool`, `chroma`, `fuseki`, `ollama`
+1. **OWL 2 DL ontologija** - 304 triples, 17 klasa, 37 properties
+2. **RDF reprezentacija** - Q&A sesije loguju se u RDF format
+3. **Apache Jena Fuseki** - SPARQL endpoint, query interface
+4. **Semantička integracija** - LTI + LMS domain u OWL-u
+5. **SPARQL upiti** - Pretraga klasa, properties, instanci
