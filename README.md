@@ -557,28 +557,6 @@ AI Answer + Confidence Score
 
 ---
 
-## FINALNI CHECKLIST
-
-Pre prezentacije, proveri:
-
-- [ ] Docker Desktop pokrenut
-- [ ] OpenSSL ključevi generisani (`private.key`, `public.key`)
-- [ ] `docker-compose up -d` završen bez grešaka
-- [ ] Canvas pristupan na http://localhost:3000
-- [ ] Developer Key kreiran u Rails console-u
-- [ ] Client ID ubačen u `lti-config.json`
-- [ ] LTI tool restartovan nakon config izmene
-- [ ] Kurs "Savremene obrazovne tehnologije" kreiran
-- [ ] External Tool "Q&A Asistent" dodat u kurs
-- [ ] Admin enrollovan u kurs kao Instructor
-- [ ] Test materijal upload-ovan (TXT, PDF ili DOCX)
-- [ ] Q&A test pitanje vraća odgovor sa confidence > 60%
-- [ ] Ontologija upload-ovana u Fuseki (304 triples)
-- [ ] SPARQL test upit radi na http://localhost:3030
-- [ ] "📚 Pregled materijala" prikazuje fajlove
-
----
-
 ### Za predmet: Savremene obrazovne tehnologije i standardi
 
 **Ključne tačke:**
