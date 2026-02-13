@@ -15,7 +15,7 @@ def load_ontology(ontology_file):
     """
     Učitava ontologiju iz Turtle fajla
     """
-    print(f"📖 Učitavam ontologiju iz {ontology_file}...")
+    print(f"Učitavam ontologiju iz {ontology_file}...")
     
     graph = Graph()
     graph.parse(ontology_file, format='turtle')
@@ -39,18 +39,18 @@ def upload_to_fuseki(graph, fuseki_url, dataset='lms-tools', clear_existing=Fals
     
     # Clear existing data if requested
     if clear_existing:
-        print(f"🗑️  Brisanje postojećih podataka iz {dataset}...")
+        print(f"Brisanje postojećih podataka iz {dataset}...")
         try:
             response = requests.delete(f"{data_url}?default")
             if response.status_code in [200, 204, 404]:
                 print("   ✓ Podaci obrisani")
             else:
-                print(f"   ⚠️  Status: {response.status_code}")
+                print(f"Status: {response.status_code}")
         except Exception as e:
-            print(f"   ⚠️  Greška pri brisanju: {e}")
+            print(f"Greška pri brisanju: {e}")
     
     # Serialize graph to Turtle
-    print(f"📤 Upload ontologije u Fuseki ({data_url})...")
+    print(f"Upload ontologije u Fuseki ({data_url})...")
     ttl_data = graph.serialize(format='turtle')
     
     headers = {
@@ -61,10 +61,10 @@ def upload_to_fuseki(graph, fuseki_url, dataset='lms-tools', clear_existing=Fals
         response = requests.post(data_url, data=ttl_data, headers=headers)
         response.raise_for_status()
         
-        print(f"   ✅ Uspešno upload-ovano {len(graph)} triplet-a")
+        print(f"Uspešno upload-ovano {len(graph)} triplet-a")
         return True
     except requests.exceptions.RequestException as e:
-        print(f"   ❌ Greška pri upload-u: {e}")
+        print(f"Greška pri upload-u: {e}")
         if hasattr(e.response, 'text'):
             print(f"   Detalji: {e.response.text}")
         return False
@@ -97,7 +97,7 @@ def test_sparql_query(fuseki_url, dataset='lms-tools'):
     }
     """
     
-    print(f"\n🔍 Test SPARQL upita...")
+    print(f"\nTest SPARQL upita...")
     
     try:
         response = requests.post(
@@ -120,7 +120,7 @@ def test_sparql_query(fuseki_url, dataset='lms-tools'):
         
         return True
     except Exception as e:
-        print(f"   ❌ Greška pri test upitu: {e}")
+        print(f"Greška pri test upitu: {e}")
         return False
 
 
@@ -132,7 +132,7 @@ def create_sample_data(graph):
     from rdflib.namespace import RDF, RDFS, XSD
     from datetime import datetime
     
-    print(f"\n📝 Kreiranje primer podataka...")
+    print(f"\nKreiranje primer podataka...")
     
     ns = Namespace("http://example.org/lms-tools#")
     
@@ -235,7 +235,7 @@ def main():
     
     # Check if ontology file exists
     if not Path(args.ontology).exists():
-        print(f"❌ Ontologija fajl {args.ontology} ne postoji")
+        print(f"Ontologija fajl {args.ontology} ne postoji")
         sys.exit(1)
     
     try:
@@ -261,12 +261,12 @@ def main():
         if args.test:
             test_sparql_query(args.fuseki_url, args.dataset)
         
-        print(f"\n✅ Ontologija uspešno inicijalizovana!")
+        print(f"\nOntologija uspešno inicijalizovana!")
         print(f"   SPARQL endpoint: {args.fuseki_url}/{args.dataset}/query")
         print(f"   Web interface: {args.fuseki_url}/dataset.html")
         
     except Exception as e:
-        print(f"\n❌ Greška: {e}")
+        print(f"\nGreška: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

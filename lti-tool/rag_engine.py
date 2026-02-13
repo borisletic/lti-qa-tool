@@ -187,7 +187,7 @@ class RAGEngine:
                 if context_chunks:
                     avg_distance = sum(c.get('distance', 1.0) for c in context_chunks) / len(context_chunks)
                     
-                    print(f"🔍 avg_distance = {avg_distance:.4f}")
+                    print(f"avg_distance = {avg_distance:.4f}")
                     
                     # Za cosine distance, 0.6 je još uvek DOBAR match!
                     # Aggressive boost za realističniji prikaz
@@ -204,7 +204,7 @@ class RAGEngine:
                     else:
                         confidence = 0.35  # Prihvatljiv
                     
-                    print(f"🔍 confidence = {confidence:.2f} ({confidence*100:.0f}%)")
+                    print(f"confidence = {confidence:.2f} ({confidence*100:.0f}%)")
                 else:
                     confidence = 0.0
                 
