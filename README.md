@@ -11,8 +11,8 @@
 ## PREDUSLOVI
 
 - **Docker Desktop** (Windows/Mac) ili Docker Engine (Linux)
-- **8GB RAM** minimum
-- **20GB** slobodnog prostora
+- **32GB RAM**
+- **100GB** slobodnog prostora
 - **Git** (opciono)
 
 ---
