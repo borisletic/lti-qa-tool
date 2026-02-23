@@ -146,7 +146,7 @@ class RAGEngine:
         # Sastavi kontekst
         context = "\n\n".join([chunk['content'] for chunk in context_chunks])
         
-        # POBOLJŠAN PROMPT - stroža instrukcija
+        # PROMPT
         prompt = f"""Ti si obrazovni asistent. Tvoj zadatak je da odgovoriš na pitanje ISKLJUČIVO na osnovu datog konteksta.
 
             PRAVILA:
@@ -189,7 +189,7 @@ class RAGEngine:
                     
                     print(f"avg_distance = {avg_distance:.4f}")
                     
-                    # Za cosine distance, 0.6 je još uvek DOBAR match!
+                    
                     # Aggressive boost za realističniji prikaz
                     if avg_distance <= 0.35:
                         confidence = 0.95  # Perfektan
@@ -198,7 +198,7 @@ class RAGEngine:
                     elif avg_distance <= 0.55:
                         confidence = 0.75  # Vrlo dobar
                     elif avg_distance <= 0.65:
-                        confidence = 0.75  # Dobar ← TVOJ SCORE OVDE
+                        confidence = 0.75  # Dobar 
                     elif avg_distance <= 0.75:
                         confidence = 0.50  # Solidan
                     else:
