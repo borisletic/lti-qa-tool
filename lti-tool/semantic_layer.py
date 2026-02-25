@@ -216,13 +216,63 @@ class SemanticLayer:
             return False
     
     def _persist_graph(self):
-        """
-        Persists the graph to file
-        """
         output_file = 'data/semantic-graph.ttl'
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        
         self.graph.serialize(destination=output_file, format='turtle')
+        
+        # Sync na Fuseki
+        self._sync_to_fuseki()
+
+    def _sync_to_fuseki(self):
+        """
+        Sync samo Q&A trojke na Fuseki koristeci SPARQL UPDATE
+        """
+        try:
+            import requests
+            fuseki_url = os.environ.get('FUSEKI_URL', 'http://fuseki:3030')
+
+            # Izvuci samo Q&A trojke (ne cijelu ontologiju)
+            qa_triples = []
+            for s, p, o in self.graph:
+                s_str = str(s)
+                if any(x in s_str for x in ['/questions/', '/answers/', '/launches/', '/feedback/']):
+                    # Formatiraj triple za SPARQL
+                    if hasattr(o, 'language') and o.language:
+                        o_str = f'"{str(o)}"@{o.language}'
+                    elif hasattr(o, 'datatype') and o.datatype:
+                        o_str = f'"{str(o)}"^^<{o.datatype}>'
+                    elif hasattr(o, 'toPython'):
+                        o_str = f'"{str(o)}"'
+                    else:
+                        o_str = f'<{str(o)}>'
+                    
+                    qa_triples.append(f'<{s}> <{p}> {o_str} .')
+
+            if not qa_triples:
+                return
+
+            # Podijeli na chunks od 20 trojki
+            chunk_size = 20
+            for i in range(0, len(qa_triples), chunk_size):
+                chunk = qa_triples[i:i+chunk_size]
+                triples_str = ' '.join(chunk)
+                
+                query = f'INSERT DATA {{ {triples_str} }}'
+                
+                r = requests.post(
+                    f'{fuseki_url}/lms-tools/update',
+                    data={'update': query},
+                    headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                    timeout=10
+                )
+                
+                if r.status_code in [200, 204]:
+                    print(f'Fuseki sync OK: {len(chunk)} trojki')
+                else:
+                    print(f'Fuseki sync error: {r.status_code}')
+
+        except Exception as e:
+            print(f'Fuseki sync exception: {e}')
     
     def get_ontology_stats(self):
         """
