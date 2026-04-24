@@ -173,6 +173,8 @@ services:
       CHROMA_PORT: "8000"
       FUSEKI_URL: http://fuseki:3030
       OLLAMA_HOST: http://ollama:11434
+      CANVAS_API_URL: ${CANVAS_API_URL:-http://canvas:80}
+      CANVAS_API_TOKEN: ${CANVAS_API_TOKEN}
     volumes:
       - ../lti-tool:/app
       - vector_db_data:/app/data
@@ -181,6 +183,7 @@ services:
     depends_on:
       - chroma
       - fuseki
+      - canvas
     networks:
       - lms_network
     healthcheck:
